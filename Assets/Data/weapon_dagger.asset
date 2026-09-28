@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb0e110999d6f448af8721a5e45b27a, type: 3}
+  m_Name: weapon_dagger
+  m_EditorClassIdentifier: Assembly-CSharp::DNDBeyond.Data.EquipmentSO
+  id: weapon_dagger
+  displayName: Dagger
+  category: 3
+  raceType: 0
+  classType: 0
+  icon: {fileID: 21300000, guid: 5f62a3e22d45ff749a98262e9ccc9990, type: 3}
+  mannequinSprite: {fileID: 21300000, guid: 5f62a3e22d45ff749a98262e9ccc9990, type: 3}
+  primaryColor: {r: 1, g: 1, b: 1, a: 1}
+  secondaryColor: {r: 1, g: 1, b: 1, a: 1}
+  flavorTagline: 1d4 Piercing (Finesse, Light)
+  description: Swift and easily concealed blade suitable for precision strikes.
+  armorType: 0
+  baseAC: 10
+  stealthDisadvantage: 0
+  requiresProficiency: 1
+  weaponType: 3
+  damage: 1d4
+  damageType: Piercing
+  weaponProperties: Finesse, Light, Thrown
+  isArcaneFocus: 0

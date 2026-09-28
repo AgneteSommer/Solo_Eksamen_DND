@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 74f41bbe1f95b7c4c8d01f8543b8fbc4, type: 3}
+  m_Name: race_elf
+  m_EditorClassIdentifier: Assembly-CSharp::DNDBeyond.Data.CharacterOptionSO
+  id: race_elf
+  displayName: Elf
+  category: 0
+  raceType: 1
+  classType: 0
+  icon: {fileID: 21300000, guid: 23872db76865fee4eba29fb462316a0c, type: 3}
+  mannequinSprite: {fileID: 21300000, guid: 23872db76865fee4eba29fb462316a0c, type: 3}
+  primaryColor: {r: 0.96, g: 0.88, b: 0.82, a: 1}
+  secondaryColor: {r: 1, g: 1, b: 1, a: 1}
+  flavorTagline: Fey Ancestry & Keen Senses
+  description: Graceful humanoid with pointed ears and natural affinity for arcane
+    dexterity.

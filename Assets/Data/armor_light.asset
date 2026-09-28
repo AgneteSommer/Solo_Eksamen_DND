@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb0e110999d6f448af8721a5e45b27a, type: 3}
+  m_Name: armor_light
+  m_EditorClassIdentifier: Assembly-CSharp::DNDBeyond.Data.EquipmentSO
+  id: armor_light
+  displayName: Leather Armor
+  category: 2
+  raceType: 0
+  classType: 0
+  icon: {fileID: 21300000, guid: e3d7b712d323e704e81996bbf42996a0, type: 3}
+  mannequinSprite: {fileID: 21300000, guid: e3d7b712d323e704e81996bbf42996a0, type: 3}
+  primaryColor: {r: 0.55, g: 0.35, b: 0.2, a: 1}
+  secondaryColor: {r: 1, g: 1, b: 1, a: 1}
+  flavorTagline: Light Armor (AC 11 + Full DEX)
+  description: Supple molded leather offering protection without impeding agility
+    or stealth.
+  armorType: 1
+  baseAC: 11
+  stealthDisadvantage: 0
+  requiresProficiency: 1
+  weaponType: 0
+  damage: 1d4
+  damageType: Bludgeoning
+  weaponProperties: Simple
+  isArcaneFocus: 0
