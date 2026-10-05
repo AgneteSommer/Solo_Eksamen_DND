@@ -25,12 +25,12 @@ namespace DNDBeyond.UI
         [SerializeField] private Button noteCloseButton;
 
         [Header("Color Schemes")]
-        [SerializeField] private Color harmoniousGlow = new Color(0.95f, 0.78f, 0.2f, 0.85f);
-        [SerializeField] private Color harmoniousBg = new Color(0.25f, 0.22f, 0.08f, 0.95f);
-        [SerializeField] private Color quirkGlow = new Color(1.0f, 0.45f, 0.15f, 0.95f);
-        [SerializeField] private Color quirkBg = new Color(0.35f, 0.12f, 0.08f, 0.95f);
+        [SerializeField] private Color harmoniousGlow = new Color(0.20f, 0.65f, 0.30f, 0.85f);
+        [SerializeField] private Color harmoniousBg = Color.white;
+        [SerializeField] private Color quirkGlow = new Color(0.85f, 0.22f, 0.22f, 0.95f);
+        [SerializeField] private Color quirkBg = Color.white;
 
-        private bool isNoteCardOpen = true;
+        private bool isNoteCardOpen = false;
         private Coroutine pulseCoroutine;
         private Coroutine slideCoroutine;
         private HarmonyEvaluationResult lastResult;
@@ -52,8 +52,8 @@ namespace DNDBeyond.UI
                 CharacterCustomizerManager.Instance.OnHarmonyEvaluated += HandleHarmonyEvaluated;
             }
 
-            // Start open
-            SetNoteCardVisible(true, immediate: true);
+            // Start closed on clean slate until a quirk is triggered or user toggles
+            SetNoteCardVisible(false, immediate: true);
         }
 
         private void OnDestroy()
@@ -79,8 +79,9 @@ namespace DNDBeyond.UI
 
             if (d20StatusText != null)
             {
-                d20StatusText.text = isQuirk ? "RULE QUIRK" : "HARMONIOUS";
-                d20StatusText.color = isQuirk ? new Color(1f, 0.6f, 0.2f) : new Color(1f, 0.9f, 0.4f);
+                d20StatusText.text = isQuirk 
+                    ? "<b><color=#B71C1C>SYNERGY</color></b>\n<size=12><color=#666666>Rule Quirk Active (Click)</color></size>" 
+                    : "<b><color=#181818>SYNERGY</color></b>\n<size=12><color=#2E7D32>Harmonious</color></size>";
             }
 
             if (quirkBadgeImage != null)
@@ -101,16 +102,19 @@ namespace DNDBeyond.UI
 
             if (noteTagText != null)
             {
-                noteTagText.text = isQuirk ? "[ 5e RULE RESTRICTION ]" : "[ 5e SYNERGY ]";
-                noteTagText.color = isQuirk ? new Color(1f, 0.5f, 0.2f) : new Color(0.4f, 0.9f, 0.4f);
+                noteTagText.text = isQuirk ? "[ RULE QUIRK ]" : "[ SYNERGY INSIGHT ]";
+                noteTagText.color = isQuirk ? new Color(0.77f, 0.12f, 0.12f) : new Color(0.18f, 0.55f, 0.25f);
             }
 
             // Animate D20 pulse
             if (pulseCoroutine != null) StopCoroutine(pulseCoroutine);
             pulseCoroutine = StartCoroutine(DoD20Pulse(isQuirk));
 
-            // Automatically open note card to draw attention to insights/quirks!
-            SetNoteCardVisible(true);
+            // Automatically slide open note card when a quirk is discovered!
+            if (isQuirk)
+            {
+                SetNoteCardVisible(true);
+            }
         }
 
         public void ToggleNoteCard()
@@ -134,7 +138,7 @@ namespace DNDBeyond.UI
                 }
                 if (noteCardPanel != null)
                 {
-                    noteCardPanel.anchoredPosition = visible ? new Vector2(0, -90) : new Vector2(-400, -90);
+                    noteCardPanel.anchoredPosition = visible ? new Vector2(0, -95) : new Vector2(-430, -95);
                 }
             }
             else
@@ -148,7 +152,7 @@ namespace DNDBeyond.UI
             if (noteCardPanel == null || noteCardCanvasGroup == null) yield break;
 
             Vector2 startPos = noteCardPanel.anchoredPosition;
-            Vector2 targetPos = visible ? new Vector2(0, -90) : new Vector2(-400, -90);
+            Vector2 targetPos = visible ? new Vector2(0, -95) : new Vector2(-430, -95);
 
             float startAlpha = noteCardCanvasGroup.alpha;
             float targetAlpha = visible ? 1f : 0f;

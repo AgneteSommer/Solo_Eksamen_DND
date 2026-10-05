@@ -1,7 +1,9 @@
 # D&D Beyond: Visual Character Creation Onboarding (Plan & Specification)
 
 > **CORE PROTOTYPING DIRECTIVE: MECHANICS-FIRST / GREYBOXING**  
-> For this initial playable prototype, **do NOT spend time on visual polish, complex art assets, or matching exact D&D Beyond styling**. The priority is to test the interaction loop and prove the mechanics work. Colored boxes, simple geometric shapes, primitive placeholders, and basic UI elements are 100% acceptable and encouraged. Proof of concept and playability come first!
+> For this playable prototype, prioritize functionality, clear layout, and responsive interaction over art polish. Clean colored boxes, standard geometric shapes, and crisp TextMeshPro UI elements are expected. Proof of concept, accurate D&D rule feedback, and an intuitive user flow are the core goals!
+
+---
 
 ## 1. Project Overview & Exam Framework
 * **Sender:** D&D Beyond (Wizards of the Coast digital companion & toolset).
@@ -11,137 +13,145 @@
 
 ---
 
-## 2. Visual Layout & UX Design (Greybox Wireframe)
-The screen layout directly translates the paper prototyping mockups into a responsive 2D canvas. Placeholders (simple tinted panels, boxes, and standard UI buttons) should be used:.
+## 2. Academic Gamification Framework (For Exam Report & Presentation)
+This project uses **three foundational game design mechanics** to transform dry character creation form-filling into a playful experience:
+
+1. **Immediate Feedback Loops & Avatar Customization (Self-Expression / Toy-Play):**
+   * *Mechanism:* Equipping gear or picking a species instantly alters the 2D character avatar on the platform.
+   * *Learning Theory:* Replaces passive text tables with visual cause-and-effect and player ownership (Karl Kapp).
+2. **Curiosity Loops & "Safe Failure" (The Synergy Engine):**
+   * *Mechanism:* Unconventional combinations (like a Barbarian or Wizard in Heavy Armor) do not show punitive error messages. Instead, the D20 pulses and reveals a constructive "Synergy" insight card.
+   * *Learning Theory:* Encourages active experimentation and safe trial-and-error learning without fear of making a "wrong" character.
+3. **Goal Progression & Milestones (The "Adventure Ready" Quest Checklist):**
+   * *Mechanism:* A 4-step progress checklist (`[✓] Species`, `[✓] Class`, `[✓] Armor`, `[✓] Weapon`) in the bottom-left mini sheet that culminates in a celebratory **"⭐ Adventure Ready! (4/4)"** status when complete.
+   * *Learning Theory:* Breaks a daunting 300-page ruleset into 4 bite-sized, achievable mini-goals (Zeigarnik Effect / Completion Dynamics).
+
+---
+
+## 3. Visual Layout & UX Design (16:9 Widescreen Wireframe)
+* **Reference Resolution:** `1920 × 1080` (16:9 Landscape).
+* **Visual Theme & Palette (D&D Beyond Official Light Theme):**
+  * Inspired directly by D&D Beyond's actual web character builder (see reference screenshot):
+    - **Background:** Light off-white parchment / clean neutral paper (`#F5F5F3` / `#F8F7F5`).
+    - **UI Panels & Cards:** Crisp white rounded cards (`#FFFFFF` with `#E0E0E0` border, `radius: 8px`).
+    - **Typography:** Bold dark charcoal/black headers (`#242527`), soft grey subtitles/captions (`#666666`), and classic D&D Beyond red accents (`#B71C1C`).
+    - **Chevrons:** Subtle blue/grey navigation arrows (`#2576B3` / `#8091A5`).
+* **Layout Geometry:**
+  * **Top Header (Y = 1020 to 1080):** Compact D&D Beyond banner (`height: 60px`).
+  * **Top-Left (X = 40 to 440, Y = 620 to 1000):**
+    * **1. Permanent HUD Box (Cannot Minimize):**
+      - Title: **"SYNERGY"**
+      - Contains: Magical D20 orb indicating current synergy state (e.g. *Harmonious* vs. *Quirk Active*).
+      - Behavior: Always visible on screen as a constant status gauge.
+    * **2. Pop-up Insight Card (CAN Minimize / Close):**
+      - Title: **"RULE QUIRK"**
+      - Contains: 1-2 sentence explanation of the specific 5e mechanic (e.g., *"Barbarians lose Rage benefits while wearing Heavy Armor!"*).
+      - Behavior: Pops up / slides down when a quirk is triggered, and features a `[X]` minimize/close button so the player can dismiss it at will.
+  * **Bottom-Left (X = 40 to 440, Y = 40 to 420):**
+    * **Mini Character Sheet Panel (Clean-Slate Start):** Clean, vertically-stacked summary tags using `VerticalLayoutGroup` (no overlapping text).
+      - **Initial State:** The player begins with an empty canvas (`0/4 Choices Made`):
+        - `[ ] Species: (None chosen)`
+        - `[ ] Class: (None chosen)`
+        - `[ ] Armor: (None chosen)`
+        - `[ ] Weapon: (None chosen)`
+        - `Armor Class: 10 (Base)`
+      - **Dynamic Progression:** As choices are equipped, slots fill and check off (`[✓]`).
+      - **Progress Milestone:** When all 4 slots are chosen, a celebratory gold tag unlocks: **"⭐ Adventure Ready! (4/4)"**!
+  * **Center Stage (X = 460 to 1380):**
+    * **Hero-Scale Character & Platform:**
+      - The character mannequin stands **tall and heroic** (~750px tall).
+      - **Initial Visual State:** Starts as a clean, neutral mannequin silhouette on the pedestal (no pre-equipped armor, horns, or weapon).
+      - **Platform Alignment:** The circular diorama platform is positioned **directly at the character's feet** and grounded near the bottom of the screen (`Y ≈ -2.8` to `-3.0` world space). The character stands *on* the platform, not floating or clipped at the waist!
+  * **Right Panel: Category Menu (X = 1390 to 1900, Width = ~510px — 10% Wider for Breathing Room):**
+    * Uses a **Two-Level Drill-Down Navigation** (hiding irrelevant categories when viewing sub-options):
+      - **Level 1 (Main Menu):** Displays 4 chunky category buttons:
+        `[ 1. Species / Race ]`, `[ 2. Class ]`, `[ 3. Armor & Attire ]`, `[ 4. Weapons ]`.
+      - **Level 2 (Subcategory View):** When a category is clicked, the main menu is replaced by a dedicated subcategory view:
+        - Top Bar: `[ < Back to Categories ]` + Title (e.g. `SELECT CLASS`).
+        - Content: Scrollable list of white rounded cards matching the D&D Beyond reference image:
+          - Left: Official colored class icon badge.
+          - Center: Uppercase bold title (e.g., **BARBARIAN**) + 1-sentence fantasy hook.
+          - Right: Subtle right-arrow chevron `>`.
+    * **Bottom Action:** `[ Export to D&D Beyond -> ]` button fixed at the bottom right.
 
 ```
-+-----------------------------------------------------------------------------------+
-|  [D&D Beyond Logo / Header]                                                       |
-|                                                                                   |
-|  (TOP-LEFT)                                   (TOP-RIGHT)                         |
-|  +-----------------------+                    +--------------------------------+  |
-|  |  [ Magical D20 ]      |                    | Mini Character Sheet           |  |
-|  |  Harmony State Glow   |                    | [Tiefling] [Barbarian] [Heavy] |  |
-|  +-----------------------+                    +--------------------------------+  |
-|         |                                                                         |
-|         v (Slides out on click/change)                                            |
-|  +-----------------------------------+                                            |
-|  | [Note / Rule Insight Card]        |                                            |
-|  | "Barbarians lose Rage benefits    |                                            |
-|  |  when wearing Heavy Armor!"       |                                            |
-|  +-----------------------------------+                                            |
-|                                                                                   |
-|                        (CENTER)                                                   |
-|                 +--------------------+                                            |
-|                 |    Character       |                                            |
-|                 |    Paper Doll      |                                            |
-|                 |   (Layered 2D)     |                                            |
-|                 |                    |                                            |
-|                 |  ================  |                                            |
-|                 |  [Diorama Base]    |                                            |
-|                 +--------------------+                                            |
-|                                                                                   |
-|  (BOTTOM / DRAWER AREA)                                                           |
-|  +-----------------------------------------------------------------------------+  |
-|  | [Race]   [Class]   [Armor & Attire]   [Weapon]                              |  |
-|  |-----------------------------------------------------------------------------|  |
-|  | [Subcategory drawer: Thumbnails for Drag & Drop / Click Selection]          |  |
-|  +-----------------------------------------------------------------------------+  |
-|                                                                                   |
-|                                                    [ Export to D&D Beyond -> ]    |
-+-----------------------------------------------------------------------------------+
++----------------------------------------------------------------------------------------------------------------+
+|  [D&D BEYOND HEADER BANNER - LIGHT THEME]                                                                      |
+|                                                                                                                |
+|  (TOP-LEFT)                              (CENTER STAGE: HERO VIEWPORT)               (RIGHT MENU ~460px)       |
+|  +-----------------------------+                                                     +-----------------------+ |
+|  | [ PERMANENT: SYNERGY ]      |                                                     | [< Back] SELECT CLASS | |
+|  | (D20 Orb - Cannot Minimize) |                                                     |-----------------------| |
+|  +-----------------------------+                                                     | [ICON] BARBARIAN    > | |
+|                 |                                                                    |   "A fierce warrior.."| |
+|                 v (Dismissable)                                                      |-----------------------| |
+|  +-----------------------------+                     +-----------------------+       | [ICON] BARD         > | |
+|  | [ RULE QUIRK [X] ]          |                     |                       |       |   "An inspiring.."    | |
+|  | "Barbarians lose Rage       |                     |     HERO MANNEQUIN    |       |-----------------------| |
+|  |  benefits when wearing      |                     |    (750px tall mini)  |       | [ICON] CLERIC       > | |
+|  |  Heavy Armor!"              |                     |                       |       |   "A devout champ.."  | |
+|  +-----------------------------+                     |                       |       +-----------------------+ |
+|                                                      |                       |                                 |
+|  (BOTTOM-LEFT)                                       |                       |                                 |
+|  +-----------------------------+                     |                       |                                 |
+|  | MINI CHARACTER SHEET        |                     |                       |                                 |
+|  | [✓] Species: Tiefling       |                     |                       |                                 |
+|  | [✓] Class:   Barbarian      |                     |                       |                                 |
+|  | [✓] Armor:   Heavy Plate    |                     |   =================   |       +-----------------------+ |
+|  | [✓] Weapon:  Greataxe       |                     |   [ Platform/Feet ]   |       | [ Export Sheet -> ]   | |
+|  | AC: 18                      |                     +-----------------------+       +-----------------------+ |
+|  | ⭐ ADVENTURE READY! (4/4)    |                     (Grounded at bottom)                                      |
+|  +-----------------------------+                                                                               |
++----------------------------------------------------------------------------------------------------------------+
 ```
 
 ---
 
-## 3. Core Mechanics & Architecture
+## 4. Complete Class Roster & 1-Sentence Descriptions (Alphabetical)
 
-### A. Modular Paper-Doll Layering (Universal Mannequin Pose)
-To eliminate sprite multiplication, a single consistent neutral pose is used. Features attach across dedicated Unity 2D Sorting Layers:
-1. `Layer 0: Pedestal / Diorama Base` (Includes glowing class rune/aura).
-2. `Layer 1: Body Base` (Neutral silhouette, skin tone tinting).
-3. `Layer 2: Race Features` (Elf ears / Tiefling horns & tail).
-4. `Layer 3: Clothes / Undergarments` (Basic pants/tunic).
-5. `Layer 4: Armor Overlay` (Light Leather / Medium Scale / Heavy Plate).
-6. `Layer 5: Hair / Headwear`.
-7. `Layer 6: Handheld Weapon` (Greataxe, Arcane Staff, Dagger).
+Each class entry in the selection drawer includes the official D&D Beyond logo badge (with its specific class theme color), uppercase name, and a vibrant 1-sentence fantasy hook focusing on **how the character feels**:
 
-### B. Two-Pronged Interaction Model
-1. **Concept Cards (Race & Class):**
-   * Instant click selection.
-   * Selecting **Race** immediately updates physical attachments (horns/ears/skin).
-   * Selecting **Class** updates the pedestal rune/aura, mini sheet tag, and default proficiencies.
-2. **Tactile Drag-and-Drop + Click-to-Equip (Armor & Weapons):**
-   * Hovering over an item enlarges its thumbnail (preview).
-   * Dragging an item highlights the drop target on the character; releasing snaps it into place.
-   * Double-clicking or clicking the thumbnail also equips it immediately for ease of use.
-
-### C. Rule Harmony & Discovery Engine (The Magical D20)
-Instead of an MMO-style "DPS tier list" or punitive "Score", the D20 acts as an **insight indicator**:
-* **Harmonious State (Gold/Arcane Glow):**
-  * Choices complement each other under 5e rules.
-  * *Example:* Barbarian + Medium Armor / Unarmored + Greataxe -> *"Peak Harmony: Full Rage and Unarmored Defense active!"*
-* **Discovery / Quirk State (Curious Pulsing / Inspection Icon):**
-  * Highlights unusual or conflicting rule interactions without stopping the player.
-  * Clicking the D20 or triggering the choice slides out the **"Note:" Card**:
-    * *Barbarian + Heavy Armor:* "Barbarians are free to wear heavy armor, but their signature feature — Rage — does not grant damage resistance while wearing it!"
-    * *Wizard + Heavy Armor:* "In D&D 5e, wearing armor you aren't proficient with prevents you from casting any spells!"
-    * *Wizard + Arcane Staff:* "Your quarterstaff doubles as an Arcane Focus, channeling your magical energy."
-
-### D. Mini Character Sheet Header
-* Displays clean visual badge chips at the top right:
-  * `[ Species: Tiefling ]`
-  * `[ Class: Barbarian ]`
-  * `[ Armor: Heavy (AC 16) ]`
-  * `[ Weapon: Greataxe (1d12 Slashing) ]`
-* Keeps cognitive load low by hiding complex math while showing concrete identity.
+| # | Class Name | 1-Sentence Beginner Fantasy Hook | Key Synergy Insight |
+|---|------------|-----------------------------------|---------------------|
+| 1 | **Barbarian** | *"A fierce warrior driven by primal fury who charges headfirst into the heat of battle."* | Heavy armor disables Rage benefits. |
+| 2 | **Bard** | *"An inspiring performer and charismatic storyteller whose music weaves enchantment and wonder."* | Non-proficient armor blocks spellcasting. |
+| 3 | **Cleric** | *"A devout champion of the gods who channels divine light, miracles, and protective magic."* | Proficient with shields & armor. |
+| 4 | **Druid** | *"A guardian of the wilderness who commands the forces of nature and transforms into mighty beasts."* | Taboo against metal armor; nature focus. |
+| 5 | **Fighter** | *"A master of weapons and battlefield tactics who conquers danger with pure combat skill."* | Peak synergy with all weapon and armor tiers. |
+| 6 | **Monk** | *"A disciplined martial artist who channels spiritual inner ki into lightning-fast unarmed strikes."* | Armor disables Martial Arts and Unarmored Defense. |
+| 7 | **Paladin** | *"A noble warrior bound by a sacred oath to smite evil and stand as an unyielding beacon of hope."* | High synergy with Heavy Armor and martial weapons. |
+| 8 | **Ranger** | *"A master tracker and scout who walks the untamed frontiers with deadly precision and wilderness magic."* | Heavy armor impairs stealth. |
+| 9 | **Rogue** | *"A cunning trickster who excels in stealth, agility, and striking lethal blows from the shadows."* | Sneak attack requires finesse/ranged; stealth priority. |
+| 10| **Sorcerer** | *"A passionate magic wielder born with wild, raw arcane power coursing through their veins."* | Wearing non-proficient armor blocks all spellcasting. |
+| 11| **Warlock** | *"A seeker of occult secrets who draws eerie eldritch power from a pact with an otherworldly patron."* | Medium/heavy armor blocks spellcasting. |
+| 12| **Wizard** | *"A scholarly master of the arcane who bends reality to their will through intellect and spellbooks."* | Wearing armor blocks spellcasting; staff serves as focus. |
 
 ---
 
-## 4. Prototype Content Scope (Curated for Solo Exam)
+## 5. Implementation Milestones for Architect Agent
 
-| Category | Options | Visual & Mechanical Role |
-| :--- | :--- | :--- |
-| **Race / Species** | **Elf**, **Tiefling** | High visual contrast: Graceful ears vs. dramatic curved horns and tail. |
-| **Class** | **Barbarian**, **Wizard** | Archetype contrast: Primal martial brawler vs. scholarly spellcaster. |
-| **Armor & Attire** | **Unarmored** (Robes/Clothes)<br>**Light** (Leather)<br>**Medium** (Hide/Scale)<br>**Heavy** (Plate) | Demonstrates AC trade-offs, stealth disadvantage, and class restrictions. |
-| **Weapons** | **Greataxe** (Two-Handed Heavy)<br>**Arcane Staff** (Focus)<br>**Dagger** (Light Finesse) | Shows weapon size, martial vs. caster focus, and visual flair. |
+1. **Milestone 1: Mini Sheet Relocation & Clean-Slate Checklist**
+   * Move Mini Character Sheet to the **Bottom-Left corner**.
+   * Use `VerticalLayoutGroup` so `Armor Class` never overlaps text.
+   * **Clean-Slate Startup:** The player starts with `0/4` choices made. The mannequin starts as a neutral blank base on the platform, and the checklist shows `[ ] (None chosen)`.
+   * Add dynamic checklist checks (`[✓]`) that unlock the celebratory golden **"⭐ Adventure Ready! (4/4)"** status when all 4 slots are filled.
 
----
+2. **Milestone 2: Top-Left Synergy HUD vs. Dismissable Rule Quirk Card**
+   * Keep the permanent top-left box titled **"SYNERGY"** (houses the D20 orb, cannot be minimized).
+   * Create the pop-up/slide-down card below it titled **"RULE QUIRK"** with a visible `[X]` minimize/dismiss button that lets the player close it.
 
-## 5. Technical Architecture for Unity Implementation
+3. **Milestone 3: Grounded Platform Alignment**
+   * Position the circular platform sprite directly under the soles of the mannequin's feet.
+   * Ground the character + platform near the bottom of the screen (`Y ≈ -2.8` to `-3.0` world space).
 
-### Data Architecture (ScriptableObjects)
-* `CharacterOptionSO`: Base ScriptableObject holding ID, Display Name, Category, Icon, SpriteLayer, and Flavor Tagline.
-* `EquipmentSO : CharacterOptionSO`: Extends with Armor Type / Weapon Category, Base AC, and Proficiency tags.
-* `HarmonyRuleSO`: Contains conditions (`RequiredClass`, `EquippedArmorType`, `EquippedWeapon`) and output status (`HarmonyState`, `InsightNoteText`).
+4. **Milestone 4: 10% Wider Menu & Two-Level Drill-Down**
+   * Expand the right panel width by 10% to **~510px** for generous breathing room.
+   * Implement drill-down view swapping: Main Categories view (`Race`, `Class`, `Armor & Attire`, `Weapons`) swaps to a dedicated subcategory view with a clean `[ < Back to Categories ]` top button.
 
-### Manager Scripts
-* `CharacterCustomizerManager`: Central state manager storing current choices and broadcasting events (`OnCharacterUpdated`).
-* `PaperDollView`: Listens to state changes and updates SpriteRenderers on the modular character layers.
-* `RuleHarmonyEvaluator`: Evaluates current build against active `HarmonyRuleSO` assets and updates the D20 controller.
-* `D20HarmonyUI`: Controls the D20 magic VFX / animations and drives the slide-in/slide-out "Note:" Card.
-* `ItemDragHandler`: Implements `IBeginDragHandler`, `IDragHandler`, `IEndDragHandler`, and `IPointerClickHandler` for smooth item interactions.
-
----
-
-## 6. Implementation Milestones for Architect Agent
-
-1. **Milestone 1: Project Setup & UI Mockup (Canvas & Layout)**
-   * Set up URP 2D Camera, resolution scaling (1920x1080 reference).
-   * Construct Canvas hierarchy: Header, Top-Left (D20 & Note Card), Top-Right (Mini Sheet), Center (Diorama), Bottom (Category Drawers).
-2. **Milestone 2: Paper-Doll Rigging & Sprite Swapping**
-   * Create the modular mannequin GameObject with properly sorted `SpriteRenderer` layers.
-   * Hook up basic button clicks to swap Sprites on the paper-doll.
-3. **Milestone 3: Drag-and-Drop Equipment Interaction**
-   * Implement UI drag-and-drop from drawers onto the character viewport.
-   * Add snappy feedback (pickup scale, drop snap, reset on cancel).
-4. **Milestone 4: Rule Harmony Engine & Note Card Animation**
-   * Build rule evaluation logic for Barbarian and Wizard permutations.
-   * Implement D20 visual states (glowing gold vs. curiosity pulse).
-   * Animate the "Note:" card slide-out when conflicts/insights occur.
-5. **Milestone 5: Playable Greybox Verification & Export Summary**
-   * Keep visuals greybox (colored boxes, simple labels, basic shapes).
-   * Verify all permutations play cleanly in Unity Editor.
-   * Add a simple "Export Summary" popup showing the final build choices.
-   * (Visual D&D Beyond styling & art polish can be added in a future phase once mechanics are proven).
+5. **Milestone 5: D&D Beyond Light Theme & Official Class Cards**
+   * Apply D&D Beyond's light theme palette: parchment/light background (`#F5F5F3`), crisp white rounded cards with subtle borders (`#E0E0E0`).
+   * Import the pixel/vector versions of the official D&D Beyond class logos into `Assets/Sprites/Classes`.
+   * Structure each class card to match the reference image:
+     - Left: Colored class theme badge with white class emblem.
+     - Center: Bold uppercase class name (e.g., **BARBARIAN**) + feeling-focused 1-sentence hook.
+     - Right: Subtle right chevron `>`.

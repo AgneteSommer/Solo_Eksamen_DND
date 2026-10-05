@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e27bc7df9817b064e8bab494fcccb07a, type: 3}
+  m_Name: rule_fighter_heavy_armor
+  m_EditorClassIdentifier: Assembly-CSharp::DNDBeyond.Data.HarmonyRuleSO
+  ruleId: rule_fighter_heavy_armor
+  ruleTitle: 'Harmonious Synergy: Frontline Master'
+  harmonyState: 0
+  priority: 65
+  checkClass: 1
+  requiredClass: 5
+  checkArmor: 1
+  requiredArmor: 3
+  checkWeapon: 0
+  requiredWeapon: 0
+  checkRace: 0
+  requiredRace: 0
+  shortStatus: Master of Heavy Armor (AC 18)
+  insightNoteText: Full Heavy Armor proficiency grants maximum protection (AC 18),
+    allowing you to hold the frontline with unmatched resilience!

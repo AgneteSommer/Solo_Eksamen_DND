@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -9,37 +10,46 @@ namespace DNDBeyond.UI
 {
     public class CategoryDrawerUI : MonoBehaviour
     {
-        [Header("Category Tabs")]
-        [SerializeField] private Button raceTabButton;
-        [SerializeField] private Button classTabButton;
-        [SerializeField] private Button armorTabButton;
-        [SerializeField] private Button weaponTabButton;
+        [Header("Level 1: Main Categories View")]
+        [SerializeField] private GameObject mainCategoriesPanel;
+        [SerializeField] private Button raceCategoryButton;
+        [SerializeField] private Button classCategoryButton;
+        [SerializeField] private Button armorCategoryButton;
+        [SerializeField] private Button weaponCategoryButton;
 
-        [Header("Tab Visuals")]
-        [SerializeField] private Color tabActiveColor = new Color(0.25f, 0.45f, 0.65f, 1f);
-        [SerializeField] private Color tabInactiveColor = new Color(0.15f, 0.18f, 0.22f, 1f);
+        [Header("Main Category Equipped Labels")]
+        [SerializeField] private TextMeshProUGUI raceEquippedText;
+        [SerializeField] private TextMeshProUGUI classEquippedText;
+        [SerializeField] private TextMeshProUGUI armorEquippedText;
+        [SerializeField] private TextMeshProUGUI weaponEquippedText;
 
-        [Header("Drawer Content Container")]
+        [Header("Level 2: Subcategory View")]
+        [SerializeField] private GameObject subcategoryPanel;
+        [SerializeField] private Button backButton;
+        [SerializeField] private TextMeshProUGUI subcategoryTitleText;
         [SerializeField] private Transform itemsContainer;
         [SerializeField] private GameObject drawerItemPrefab;
 
-        private OptionCategory activeCategory = OptionCategory.Race;
+        private OptionCategory currentSubcategory = OptionCategory.Class;
         private List<DrawerItemView> activeItemViews = new List<DrawerItemView>();
 
         private void Start()
         {
-            if (raceTabButton != null) raceTabButton.onClick.AddListener(() => SwitchCategory(OptionCategory.Race));
-            if (classTabButton != null) classTabButton.onClick.AddListener(() => SwitchCategory(OptionCategory.Class));
-            if (armorTabButton != null) armorTabButton.onClick.AddListener(() => SwitchCategory(OptionCategory.Armor));
-            if (weaponTabButton != null) weaponTabButton.onClick.AddListener(() => SwitchCategory(OptionCategory.Weapon));
+            if (raceCategoryButton != null) raceCategoryButton.onClick.AddListener(() => OpenSubcategory(OptionCategory.Race));
+            if (classCategoryButton != null) classCategoryButton.onClick.AddListener(() => OpenSubcategory(OptionCategory.Class));
+            if (armorCategoryButton != null) armorCategoryButton.onClick.AddListener(() => OpenSubcategory(OptionCategory.Armor));
+            if (weaponCategoryButton != null) weaponCategoryButton.onClick.AddListener(() => OpenSubcategory(OptionCategory.Weapon));
+
+            if (backButton != null) backButton.onClick.AddListener(ShowMainMenu);
 
             if (CharacterCustomizerManager.Instance != null)
             {
                 CharacterCustomizerManager.Instance.OnCharacterUpdated += HandleCharacterUpdated;
+                UpdateEquippedLabels(CharacterCustomizerManager.Instance.CurrentBuild);
             }
 
-            // Default to Race or Armor
-            SwitchCategory(OptionCategory.Armor);
+            // Start on Main Menu
+            ShowMainMenu();
         }
 
         private void OnDestroy()
@@ -50,41 +60,51 @@ namespace DNDBeyond.UI
             }
         }
 
-        public void SwitchCategory(OptionCategory newCategory)
+        public void ShowMainMenu()
         {
-            activeCategory = newCategory;
-            UpdateTabVisuals();
-            PopulateDrawerItems();
-        }
+            if (mainCategoriesPanel != null) mainCategoriesPanel.SetActive(true);
+            if (subcategoryPanel != null) subcategoryPanel.SetActive(false);
 
-        private void UpdateTabVisuals()
-        {
-            SetTabButtonState(raceTabButton, activeCategory == OptionCategory.Race);
-            SetTabButtonState(classTabButton, activeCategory == OptionCategory.Class);
-            SetTabButtonState(armorTabButton, activeCategory == OptionCategory.Armor);
-            SetTabButtonState(weaponTabButton, activeCategory == OptionCategory.Weapon);
-        }
-
-        private void SetTabButtonState(Button btn, bool isActive)
-        {
-            if (btn == null) return;
-            var img = btn.GetComponent<Image>();
-            if (img != null)
+            if (CharacterCustomizerManager.Instance != null)
             {
-                img.color = isActive ? tabActiveColor : tabInactiveColor;
-            }
-            var text = btn.GetComponentInChildren<TextMeshProUGUI>();
-            if (text != null)
-            {
-                text.color = isActive ? Color.white : new Color(0.7f, 0.7f, 0.7f, 0.9f);
+                UpdateEquippedLabels(CharacterCustomizerManager.Instance.CurrentBuild);
             }
         }
 
-        public void PopulateDrawerItems()
+        public void OpenSubcategory(OptionCategory category)
+        {
+            currentSubcategory = category;
+
+            if (mainCategoriesPanel != null) mainCategoriesPanel.SetActive(false);
+            if (subcategoryPanel != null) subcategoryPanel.SetActive(true);
+
+            if (subcategoryTitleText != null)
+            {
+                switch (category)
+                {
+                    case OptionCategory.Race:
+                        subcategoryTitleText.text = "SELECT SPECIES";
+                        break;
+                    case OptionCategory.Class:
+                        subcategoryTitleText.text = "SELECT CLASS";
+                        break;
+                    case OptionCategory.Armor:
+                        subcategoryTitleText.text = "SELECT ARMOR";
+                        break;
+                    case OptionCategory.Weapon:
+                        subcategoryTitleText.text = "SELECT WEAPON";
+                        break;
+                }
+            }
+
+            PopulateSubcategoryItems();
+        }
+
+        public void PopulateSubcategoryItems()
         {
             if (CharacterCustomizerManager.Instance == null || itemsContainer == null || drawerItemPrefab == null) return;
 
-            // Clear old items
+            // Clear old items cleanly
             for (int i = itemsContainer.childCount - 1; i >= 0; i--)
             {
                 var child = itemsContainer.GetChild(i);
@@ -93,7 +113,14 @@ namespace DNDBeyond.UI
             }
             activeItemViews.Clear();
 
-            var options = CharacterCustomizerManager.Instance.GetOptionsForCategory(activeCategory);
+            var options = CharacterCustomizerManager.Instance.GetOptionsForCategory(currentSubcategory);
+
+            // If Class category: sort in strict alphabetical order
+            if (currentSubcategory == OptionCategory.Class)
+            {
+                options.Sort((a, b) => string.Compare(a.displayName, b.displayName, StringComparison.OrdinalIgnoreCase));
+            }
+
             var build = CharacterCustomizerManager.Instance.CurrentBuild;
 
             foreach (var opt in options)
@@ -113,6 +140,8 @@ namespace DNDBeyond.UI
 
         private void HandleCharacterUpdated(CharacterBuild build)
         {
+            UpdateEquippedLabels(build);
+
             foreach (var view in activeItemViews)
             {
                 if (view != null && view.OptionData != null)
@@ -120,6 +149,23 @@ namespace DNDBeyond.UI
                     view.SetSelected(IsOptionSelected(view.OptionData, build));
                 }
             }
+        }
+
+        private void UpdateEquippedLabels(CharacterBuild build)
+        {
+            if (build == null) return;
+
+            if (raceEquippedText != null)
+                raceEquippedText.text = build.currentRace != null ? $"Current: {build.currentRace.displayName}" : "Current: (None chosen)";
+
+            if (classEquippedText != null)
+                classEquippedText.text = build.currentClass != null ? $"Current: {build.currentClass.displayName}" : "Current: (None chosen)";
+
+            if (armorEquippedText != null)
+                armorEquippedText.text = build.currentArmor != null ? $"Current: {build.currentArmor.displayName} (AC {build.CalculateAC()})" : "Current: (None chosen)";
+
+            if (weaponEquippedText != null)
+                weaponEquippedText.text = build.currentWeapon != null ? $"Current: {build.currentWeapon.displayName}" : "Current: (None chosen)";
         }
 
         private bool IsOptionSelected(CharacterOptionSO opt, CharacterBuild build)
@@ -139,6 +185,35 @@ namespace DNDBeyond.UI
                 default:
                     return false;
             }
+        }
+
+        public void SetupDrillDownReferences(
+            GameObject mainPanel,
+            Button raceBtn, TextMeshProUGUI raceLabel,
+            Button classBtn, TextMeshProUGUI classLabel,
+            Button armorBtn, TextMeshProUGUI armorLabel,
+            Button weaponBtn, TextMeshProUGUI weaponLabel,
+            GameObject subPanel,
+            Button backBtn,
+            TextMeshProUGUI subTitle,
+            Transform itemsParent,
+            GameObject itemPrefab)
+        {
+            mainCategoriesPanel = mainPanel;
+            raceCategoryButton = raceBtn;
+            raceEquippedText = raceLabel;
+            classCategoryButton = classBtn;
+            classEquippedText = classLabel;
+            armorCategoryButton = armorBtn;
+            armorEquippedText = armorLabel;
+            weaponCategoryButton = weaponBtn;
+            weaponEquippedText = weaponLabel;
+
+            subcategoryPanel = subPanel;
+            backButton = backBtn;
+            subcategoryTitleText = subTitle;
+            itemsContainer = itemsParent;
+            drawerItemPrefab = itemPrefab;
         }
     }
 }

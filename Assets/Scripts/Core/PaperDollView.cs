@@ -34,6 +34,21 @@ namespace DNDBeyond.Core
         [SerializeField] private Color neutralAura = new Color(0.5f, 0.5f, 0.5f, 0.2f);
 
         private Coroutine punchCoroutine;
+        private Vector3 baseScale = new Vector3(1.42f, 1.42f, 1.42f);
+
+        private void Awake()
+        {
+            if (transform.localScale != Vector3.one)
+            {
+                baseScale = transform.localScale;
+            }
+        }
+
+        public void SetBaseScale(Vector3 scale)
+        {
+            baseScale = scale;
+            transform.localScale = scale;
+        }
 
         private void Start()
         {
@@ -92,25 +107,17 @@ namespace DNDBeyond.Core
                 if (pedestalAuraRenderer != null)
                 {
                     pedestalAuraRenderer.enabled = true;
-                    if (build.ClassType == CharacterClass.Barbarian)
-                    {
-                        pedestalAuraRenderer.color = barbarianAura;
-                        if (build.currentClass.mannequinSprite != null)
-                            pedestalAuraRenderer.sprite = build.currentClass.mannequinSprite;
-                    }
-                    else if (build.ClassType == CharacterClass.Wizard)
-                    {
-                        pedestalAuraRenderer.color = wizardAura;
-                        if (build.currentClass.mannequinSprite != null)
-                            pedestalAuraRenderer.sprite = build.currentClass.mannequinSprite;
-                    }
+                    Color c = build.currentClass.primaryColor;
+                    pedestalAuraRenderer.color = new Color(c.r, c.g, c.b, 0.65f);
+                    if (build.currentClass.mannequinSprite != null)
+                        pedestalAuraRenderer.sprite = build.currentClass.mannequinSprite;
                 }
             }
             else
             {
                 if (pedestalAuraRenderer != null)
                 {
-                    pedestalAuraRenderer.color = neutralAura;
+                    pedestalAuraRenderer.enabled = false;
                 }
             }
 
@@ -162,8 +169,8 @@ namespace DNDBeyond.Core
 
         private IEnumerator DoPunchScale()
         {
-            Vector3 originalScale = Vector3.one;
-            Vector3 targetScale = Vector3.one * 1.06f;
+            Vector3 originalScale = baseScale;
+            Vector3 targetScale = baseScale * 1.05f;
 
             float elapsed = 0f;
             float duration = 0.08f;

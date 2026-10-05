@@ -13,17 +13,17 @@ MonoBehaviour:
   m_Name: rule_wizard_medium_armor
   m_EditorClassIdentifier: Assembly-CSharp::DNDBeyond.Data.HarmonyRuleSO
   ruleId: rule_wizard_medium_armor
-  ruleTitle: Spellcasting Blocked!
+  ruleTitle: 'Rule Quirk: Non-Proficient Armor'
   harmonyState: 1
   priority: 90
   checkClass: 1
-  requiredClass: 2
+  requiredClass: 12
   checkArmor: 1
   requiredArmor: 2
   checkWeapon: 0
   requiredWeapon: 0
   checkRace: 0
   requiredRace: 0
-  shortStatus: Non-Proficient Armor
+  shortStatus: Spellcasting Completely Blocked
   insightNoteText: Wizards lack proficiency with medium armor. Wearing armor without
-    proficiency completely halts all spellcasting gestures!
+    proficiency completely blocks all spellcasting gestures!

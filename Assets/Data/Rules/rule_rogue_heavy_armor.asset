@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e27bc7df9817b064e8bab494fcccb07a, type: 3}
+  m_Name: rule_rogue_heavy_armor
+  m_EditorClassIdentifier: Assembly-CSharp::DNDBeyond.Data.HarmonyRuleSO
+  ruleId: rule_rogue_heavy_armor
+  ruleTitle: 'Rule Quirk: Stealth Disadvantage'
+  harmonyState: 1
+  priority: 90
+  checkClass: 1
+  requiredClass: 9
+  checkArmor: 1
+  requiredArmor: 3
+  checkWeapon: 0
+  requiredWeapon: 0
+  checkRace: 0
+  requiredRace: 0
+  shortStatus: Stealth Disadvantage & Attack Penalties
+  insightNoteText: Rogues lack heavy armor proficiency. It imposes disadvantage on
+    Dexterity ability checks (including Stealth) and attack rolls!

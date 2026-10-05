@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 74f41bbe1f95b7c4c8d01f8543b8fbc4, type: 3}
+  m_Name: class_monk
+  m_EditorClassIdentifier: Assembly-CSharp::DNDBeyond.Data.CharacterOptionSO
+  id: class_monk
+  displayName: Monk
+  category: 1
+  raceType: 0
+  classType: 6
+  icon: {fileID: 3286163911610860551, guid: 9923d814ec9d77546a3ece958a1445fc, type: 3}
+  mannequinSprite: {fileID: 21300000, guid: 4a100338a92b66a4fb4f7479399d576e, type: 3}
+  primaryColor: {r: 0, g: 0.67, b: 0.76, a: 1}
+  secondaryColor: {r: 1, g: 1, b: 1, a: 1}
+  flavorTagline: A disciplined martial artist who channels spiritual inner ki into
+    lightning-fast unarmed strikes.
+  description: A disciplined martial artist who channels spiritual inner ki into
+    lightning-fast unarmed strikes.

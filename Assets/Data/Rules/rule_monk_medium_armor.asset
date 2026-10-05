@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e27bc7df9817b064e8bab494fcccb07a, type: 3}
+  m_Name: rule_monk_medium_armor
+  m_EditorClassIdentifier: Assembly-CSharp::DNDBeyond.Data.HarmonyRuleSO
+  ruleId: rule_monk_medium_armor
+  ruleTitle: 'Rule Quirk: Monks & Armor'
+  harmonyState: 1
+  priority: 95
+  checkClass: 1
+  requiredClass: 6
+  checkArmor: 1
+  requiredArmor: 2
+  checkWeapon: 0
+  requiredWeapon: 0
+  checkRace: 0
+  requiredRace: 0
+  shortStatus: Martial Arts & Movement Disabled
+  insightNoteText: Monks lose their Martial Arts, Unarmored Movement, and Unarmored
+    Defense benefits when wearing armor!

@@ -13,17 +13,17 @@ MonoBehaviour:
   m_Name: rule_wizard_arcane_staff
   m_EditorClassIdentifier: Assembly-CSharp::DNDBeyond.Data.HarmonyRuleSO
   ruleId: rule_wizard_arcane_staff
-  ruleTitle: Arcane Focus Attuned
+  ruleTitle: 'Harmonious Synergy: Arcane Focus'
   harmonyState: 0
   priority: 50
   checkClass: 1
-  requiredClass: 2
+  requiredClass: 12
   checkArmor: 0
   requiredArmor: 0
   checkWeapon: 1
   requiredWeapon: 2
   checkRace: 0
   requiredRace: 0
-  shortStatus: Spellcasting Focus
+  shortStatus: Spellcasting Focus Attuned
   insightNoteText: Your quarterstaff doubles as an Arcane Focus, channeling spells
     cleanly without needing a material component pouch.

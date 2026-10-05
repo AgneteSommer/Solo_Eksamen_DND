@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: rule_barbarian_peak_fury
   m_EditorClassIdentifier: Assembly-CSharp::DNDBeyond.Data.HarmonyRuleSO
   ruleId: rule_barbarian_peak_fury
-  ruleTitle: Peak Primal Fury!
+  ruleTitle: 'Harmonious Synergy: Primal Fury'
   harmonyState: 0
   priority: 60
   checkClass: 1
@@ -24,6 +24,6 @@ MonoBehaviour:
   requiredWeapon: 1
   checkRace: 0
   requiredRace: 0
-  shortStatus: Peak Martial Harmony
-  insightNoteText: 'Peak Harmony: Full Rage benefits active! Wielding a two-handed
+  shortStatus: Peak Martial Synergy
+  insightNoteText: 'Peak Synergy: Full Rage benefits active! Wielding a two-handed
     Greataxe empowers Reckless Attack for massive 1d12 slashing damage.'

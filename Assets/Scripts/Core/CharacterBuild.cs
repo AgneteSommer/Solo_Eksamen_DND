@@ -29,6 +29,11 @@ namespace DNDBeyond.Core
 
             if (currentArmor == null || currentArmor.armorType == ArmorType.None)
             {
+                if (currentClass == null && currentRace == null)
+                {
+                    return 10; // Base AC before class/race selection
+                }
+
                 // Unarmored Defense for Barbarian: 10 + DEX + CON
                 if (ClassType == CharacterClass.Barbarian)
                 {

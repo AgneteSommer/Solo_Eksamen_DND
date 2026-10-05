@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: rule_barbarian_heavy_armor
   m_EditorClassIdentifier: Assembly-CSharp::DNDBeyond.Data.HarmonyRuleSO
   ruleId: rule_barbarian_heavy_armor
-  ruleTitle: Barbarians & Heavy Armor
+  ruleTitle: 'Rule Quirk: Barbarians & Heavy Armor'
   harmonyState: 1
   priority: 100
   checkClass: 1
@@ -24,7 +24,7 @@ MonoBehaviour:
   requiredWeapon: 0
   checkRace: 0
   requiredRace: 0
-  shortStatus: Rage Restriction
-  insightNoteText: "Barbarians are free to wear heavy armor, but their signature
-    feature \u2014 Rage \u2014 does not grant damage resistance or bonus damage while
-    wearing it!"
+  shortStatus: Rage Disabled in Heavy Armor
+  insightNoteText: "Barbarians can equip heavy armor, but their signature feature
+    \u2014 Rage \u2014 does not grant damage resistance or bonus damage while wearing
+    it!"

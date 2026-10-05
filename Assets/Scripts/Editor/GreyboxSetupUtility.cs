@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Collections.Generic;
 using UnityEngine;
@@ -30,7 +31,7 @@ namespace DNDBeyond.Editor
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
-            Debug.Log($"<color=#2EA3FF><b>D&D Beyond:</b> Generated {options.Count} Options and {rules.Count} Harmony Rules!</color>");
+            Debug.Log($"<color=#2EA3FF><b>D&D Beyond:</b> Generated {options.Count} Options (including all 12 classes) and {rules.Count} Synergy/Quirk Rules!</color>");
         }
 
         [MenuItem("DND Beyond/2. Build Complete Greybox Scene")]
@@ -41,20 +42,20 @@ namespace DNDBeyond.Editor
             // Setup Camera
             SetupCamera();
 
-            // Setup Mannequin in World Space
+            // Setup Mannequin grounded with platform directly under soles of feet
             var mannequinObj = SetupMannequin();
 
             // Setup Event System
             SetupEventSystem();
 
-            // Setup Canvas and UI
+            // Setup Canvas with Bottom-Left Mini Sheet and Right-Side Thick Drill-Down Menu
             SetupCanvas(mannequinObj);
 
             UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(
                 UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene());
             UnityEditor.SceneManagement.EditorSceneManager.SaveOpenScenes();
 
-            Debug.Log("<color=#44FF88><b>D&D Beyond:</b> Complete Greybox Scene Successfully Built and Saved!</color>");
+            Debug.Log("<color=#44FF88><b>D&D Beyond:</b> Complete Refactored Scene Successfully Built and Saved!</color>");
         }
 
         private static void EnsureDirectories()
@@ -65,36 +66,35 @@ namespace DNDBeyond.Editor
             if (!Directory.Exists(PREFABS_DIR)) Directory.CreateDirectory(PREFABS_DIR);
         }
 
-        #region Sprite Generation
+        #region Sprite Generation (High-Res 512x512)
 
         private static void GenerateAllSprites()
         {
-            // Canvas sizes: 128x128 or 256x256
-            CreateAndSaveSprite("spr_pedestal", 256, 128, DrawPedestal);
-            CreateAndSaveSprite("spr_pedestal_aura", 256, 128, DrawPedestalAura);
-            CreateAndSaveSprite("spr_body", 256, 256, DrawBodySilhouette);
-            CreateAndSaveSprite("spr_hair", 256, 256, DrawHair);
-            CreateAndSaveSprite("spr_clothes", 256, 256, DrawClothes);
-            CreateAndSaveSprite("spr_elf_ears", 256, 256, DrawElfEars);
-            CreateAndSaveSprite("spr_tiefling_horns", 256, 256, DrawTieflingHornsAndTail);
-            CreateAndSaveSprite("spr_armor_robes", 256, 256, DrawRobesArmor);
-            CreateAndSaveSprite("spr_armor_light", 256, 256, DrawLightLeatherArmor);
-            CreateAndSaveSprite("spr_armor_medium", 256, 256, DrawMediumScaleArmor);
-            CreateAndSaveSprite("spr_armor_heavy", 256, 256, DrawHeavyPlateArmor);
-            CreateAndSaveSprite("spr_weapon_greataxe", 256, 256, DrawGreataxe);
-            CreateAndSaveSprite("spr_weapon_staff", 256, 256, DrawArcaneStaff);
-            CreateAndSaveSprite("spr_weapon_dagger", 256, 256, DrawDagger);
-            CreateAndSaveSprite("spr_d20", 128, 128, DrawD20);
-            CreateAndSaveSprite("spr_card_frame", 128, 128, DrawCardFrame);
-            CreateAndSaveSprite("spr_box_white", 32, 32, DrawSolidBox);
+            CreateAndSaveSprite("spr_pedestal", 512, 256, DrawPedestal);
+            CreateAndSaveSprite("spr_pedestal_aura", 512, 256, DrawPedestalAura);
+            CreateAndSaveSprite("spr_body", 512, 512, DrawBodySilhouette);
+            CreateAndSaveSprite("spr_hair", 512, 512, DrawHair);
+            CreateAndSaveSprite("spr_clothes", 512, 512, DrawClothes);
+            CreateAndSaveSprite("spr_elf_ears", 512, 512, DrawElfEars);
+            CreateAndSaveSprite("spr_tiefling_horns", 512, 512, DrawTieflingHornsAndTail);
+            CreateAndSaveSprite("spr_armor_robes", 512, 512, DrawRobesArmor);
+            CreateAndSaveSprite("spr_armor_light", 512, 512, DrawLightLeatherArmor);
+            CreateAndSaveSprite("spr_armor_medium", 512, 512, DrawMediumScaleArmor);
+            CreateAndSaveSprite("spr_armor_heavy", 512, 512, DrawHeavyPlateArmor);
+            CreateAndSaveSprite("spr_weapon_greataxe", 512, 512, DrawGreataxe);
+            CreateAndSaveSprite("spr_weapon_staff", 512, 512, DrawArcaneStaff);
+            CreateAndSaveSprite("spr_weapon_dagger", 512, 512, DrawDagger);
+
+            CreateAndSaveSprite("spr_d20", 256, 256, DrawD20);
+            CreateAndSaveSprite("spr_card_frame", 128, 128, DrawCardFrame, border: new Vector4(12, 12, 12, 12));
+            CreateAndSaveSprite("spr_box_white", 64, 64, DrawSolidBox, border: new Vector4(8, 8, 8, 8));
         }
 
-        private static void CreateAndSaveSprite(string name, int width, int height, System.Action<Texture2D> drawAction)
+        private static void CreateAndSaveSprite(string name, int width, int height, System.Action<Texture2D> drawAction, Vector4? border = null)
         {
             string path = $"{SPRITES_DIR}/{name}.png";
             Texture2D tex = new Texture2D(width, height, TextureFormat.RGBA32, false);
 
-            // Fill clear
             Color[] clear = new Color[width * height];
             for (int i = 0; i < clear.Length; i++) clear[i] = Color.clear;
             tex.SetPixels(clear);
@@ -104,7 +104,7 @@ namespace DNDBeyond.Editor
 
             byte[] bytes = tex.EncodeToPNG();
             File.WriteAllBytes(path, bytes);
-            Object.DestroyImmediate(tex);
+            UnityEngine.Object.DestroyImmediate(tex);
 
             AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
             TextureImporter importer = AssetImporter.GetAtPath(path) as TextureImporter;
@@ -115,17 +115,25 @@ namespace DNDBeyond.Editor
                 importer.spritePivot = new Vector2(0.5f, 0.5f);
                 importer.filterMode = FilterMode.Bilinear;
                 importer.textureCompression = TextureImporterCompression.Uncompressed;
+                if (border.HasValue)
+                {
+                    importer.spriteBorder = border.Value;
+                }
                 importer.SaveAndReimport();
             }
         }
 
         private static void DrawSolidBox(Texture2D tex)
         {
+            Color borderCol = new Color(0.88f, 0.88f, 0.88f, 1f); // #E0E0E0
+            Color fillCol = Color.white;
+
             for (int y = 0; y < tex.height; y++)
             {
                 for (int x = 0; x < tex.width; x++)
                 {
-                    tex.SetPixel(x, y, Color.white);
+                    bool isBorder = x <= 2 || x >= tex.width - 3 || y <= 2 || y >= tex.height - 3;
+                    tex.SetPixel(x, y, isBorder ? borderCol : fillCol);
                 }
             }
         }
@@ -133,46 +141,22 @@ namespace DNDBeyond.Editor
         private static void DrawPedestal(Texture2D tex)
         {
             int cx = tex.width / 2;
-            int cy = 45;
-            int rx = 105;
-            int ry = 35;
+            int cy = 90;
+            int rx = 210;
+            int ry = 70;
 
-            // Draw base cylinder
-            for (int y = 15; y < 55; y++)
+            for (int y = 30; y < 110; y++)
             {
                 for (int x = cx - rx; x <= cx + rx; x++)
                 {
                     float dx = (float)(x - cx) / rx;
                     if (dx * dx <= 1f)
                     {
-                        float shade = 0.35f + 0.15f * (1f - dx * dx);
-                        tex.SetPixel(x, y, new Color(shade, shade, shade + 0.05f, 1f));
+                        float shade = 0.30f + 0.15f * (1f - dx * dx);
+                        tex.SetPixel(x, y, new Color(shade, shade + 0.02f, shade + 0.05f, 1f));
                     }
                 }
             }
-
-            // Draw top ellipse
-            for (int y = cy - ry; y <= cy + ry; y++)
-            {
-                for (int x = cx - rx; x <= cx + rx; x++)
-                {
-                    float dx = (float)(x - cx) / rx;
-                    float dy = (float)(y - cy) / ry;
-                    if (dx * dx + dy * dy <= 1f)
-                    {
-                        float rim = 0.55f + 0.1f * dy;
-                        tex.SetPixel(x, y, new Color(rim, rim, rim + 0.05f, 1f));
-                    }
-                }
-            }
-        }
-
-        private static void DrawPedestalAura(Texture2D tex)
-        {
-            int cx = tex.width / 2;
-            int cy = 45;
-            int rx = 100;
-            int ry = 32;
 
             for (int y = cy - ry; y <= cy + ry; y++)
             {
@@ -183,11 +167,33 @@ namespace DNDBeyond.Editor
                     float distSq = dx * dx + dy * dy;
                     if (distSq <= 1f)
                     {
-                        // Glowing ring
-                        float ring = Mathf.Abs(Mathf.Sqrt(distSq) - 0.75f);
-                        if (ring < 0.15f)
+                        float rim = 0.55f + 0.15f * dy;
+                        tex.SetPixel(x, y, new Color(rim, rim + 0.03f, rim + 0.08f, 1f));
+                    }
+                }
+            }
+        }
+
+        private static void DrawPedestalAura(Texture2D tex)
+        {
+            int cx = tex.width / 2;
+            int cy = 90;
+            int rx = 200;
+            int ry = 64;
+
+            for (int y = cy - ry; y <= cy + ry; y++)
+            {
+                for (int x = cx - rx; x <= cx + rx; x++)
+                {
+                    float dx = (float)(x - cx) / rx;
+                    float dy = (float)(y - cy) / ry;
+                    float distSq = dx * dx + dy * dy;
+                    if (distSq <= 1f)
+                    {
+                        float ring = Mathf.Abs(Mathf.Sqrt(distSq) - 0.78f);
+                        if (ring < 0.16f)
                         {
-                            float alpha = (1f - ring / 0.15f) * 0.85f;
+                            float alpha = (1f - ring / 0.16f) * 0.9f;
                             tex.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
                         }
                     }
@@ -197,62 +203,58 @@ namespace DNDBeyond.Editor
 
         private static void DrawBodySilhouette(Texture2D tex)
         {
-            // Humanoid neutral mannequin pose
             int cx = tex.width / 2;
 
-            // Head (circle at cx, 205, r=22)
-            DrawFilledCircle(tex, cx, 205, 22, Color.white);
+            // Head
+            DrawFilledCircle(tex, cx, 410, 44, Color.white);
             // Neck
-            DrawFilledRect(tex, cx - 6, 178, 12, 10, Color.white);
-            // Torso (rect cx-24 to cx+24, y=105 to 180)
-            DrawFilledRect(tex, cx - 22, 105, 44, 75, Color.white);
+            DrawFilledRect(tex, cx - 12, 355, 24, 20, Color.white);
+            // Torso
+            DrawFilledRect(tex, cx - 44, 210, 88, 150, Color.white);
             // Arms
-            DrawFilledRect(tex, cx - 36, 110, 12, 65, Color.white); // Left arm
-            DrawFilledRect(tex, cx + 24, 110, 12, 65, Color.white); // Right arm
+            DrawFilledRect(tex, cx - 72, 220, 24, 130, Color.white);
+            DrawFilledRect(tex, cx + 48, 220, 24, 130, Color.white);
             // Legs
-            DrawFilledRect(tex, cx - 18, 30, 14, 75, Color.white); // Left leg
-            DrawFilledRect(tex, cx + 4, 30, 14, 75, Color.white);  // Right leg
-            // Feet
-            DrawFilledRect(tex, cx - 22, 22, 18, 10, Color.white);
-            DrawFilledRect(tex, cx + 4, 22, 18, 10, Color.white);
+            DrawFilledRect(tex, cx - 36, 60, 28, 150, Color.white);
+            DrawFilledRect(tex, cx + 8, 60, 28, 150, Color.white);
+            // Feet: soles are at Y = 44
+            DrawFilledRect(tex, cx - 44, 44, 36, 20, Color.white);
+            DrawFilledRect(tex, cx + 8, 44, 36, 20, Color.white);
         }
 
         private static void DrawHair(Texture2D tex)
         {
             int cx = tex.width / 2;
-            // Stylish hair silhouette on top of head
-            DrawFilledCircle(tex, cx, 218, 22, new Color(0.2f, 0.15f, 0.1f, 1f));
-            DrawFilledRect(tex, cx - 24, 195, 8, 22, new Color(0.2f, 0.15f, 0.1f, 1f));
-            DrawFilledRect(tex, cx + 16, 195, 8, 22, new Color(0.2f, 0.15f, 0.1f, 1f));
+            Color hairColor = new Color(0.2f, 0.15f, 0.12f, 1f);
+            DrawFilledCircle(tex, cx, 436, 44, hairColor);
+            DrawFilledRect(tex, cx - 48, 390, 16, 44, hairColor);
+            DrawFilledRect(tex, cx + 32, 390, 16, 44, hairColor);
         }
 
         private static void DrawClothes(Texture2D tex)
         {
             int cx = tex.width / 2;
-            // Undergarment tunic & pants
-            Color underColor = new Color(0.45f, 0.40f, 0.35f, 1f);
-            DrawFilledRect(tex, cx - 20, 105, 40, 60, underColor);
-            DrawFilledRect(tex, cx - 17, 45, 12, 60, underColor * 0.9f);
-            DrawFilledRect(tex, cx + 5, 45, 12, 60, underColor * 0.9f);
+            Color underColor = new Color(0.48f, 0.44f, 0.40f, 1f);
+            DrawFilledRect(tex, cx - 40, 210, 80, 120, underColor);
+            DrawFilledRect(tex, cx - 34, 90, 24, 120, underColor * 0.9f);
+            DrawFilledRect(tex, cx + 10, 90, 24, 120, underColor * 0.9f);
         }
 
         private static void DrawElfEars(Texture2D tex)
         {
             int cx = tex.width / 2;
-            Color earColor = new Color(0.96f, 0.85f, 0.78f, 1f);
-            // Left pointed ear
-            for (int i = 0; i < 20; i++)
+            Color earColor = new Color(0.96f, 0.88f, 0.82f, 1f);
+            for (int i = 0; i < 40; i++)
             {
-                int x = cx - 22 - i;
-                int y = 205 + (i / 2);
-                DrawFilledCircle(tex, x, y, 4, earColor);
+                int x = cx - 44 - i;
+                int y = 410 + (i / 2);
+                DrawFilledCircle(tex, x, y, 7, earColor);
             }
-            // Right pointed ear
-            for (int i = 0; i < 20; i++)
+            for (int i = 0; i < 40; i++)
             {
-                int x = cx + 22 + i;
-                int y = 205 + (i / 2);
-                DrawFilledCircle(tex, x, y, 4, earColor);
+                int x = cx + 44 + i;
+                int y = 410 + (i / 2);
+                DrawFilledCircle(tex, x, y, 7, earColor);
             }
         }
 
@@ -261,32 +263,29 @@ namespace DNDBeyond.Editor
             int cx = tex.width / 2;
             Color hornColor = new Color(0.25f, 0.12f, 0.15f, 1f);
 
-            // Left curved horn
-            for (int t = 0; t <= 30; t++)
+            for (int t = 0; t <= 60; t++)
             {
-                float angle = Mathf.PI * 0.65f + (t / 30f) * 0.7f;
-                int hx = cx - 12 - (int)(Mathf.Cos(angle) * (20 + t));
-                int hy = 215 + (int)(Mathf.Sin(angle) * (30 + t * 0.6f));
-                DrawFilledCircle(tex, hx, hy, 5 - (t / 8), hornColor);
+                float angle = Mathf.PI * 0.65f + (t / 60f) * 0.7f;
+                int hx = cx - 24 - (int)(Mathf.Cos(angle) * (40 + t * 1.8f));
+                int hy = 430 + (int)(Mathf.Sin(angle) * (60 + t * 1.2f));
+                DrawFilledCircle(tex, hx, hy, 10 - (t / 8), hornColor);
             }
 
-            // Right curved horn
-            for (int t = 0; t <= 30; t++)
+            for (int t = 0; t <= 60; t++)
             {
-                float angle = Mathf.PI * 0.35f - (t / 30f) * 0.7f;
-                int hx = cx + 12 + (int)(Mathf.Cos(angle) * (20 + t));
-                int hy = 215 + (int)(Mathf.Sin(angle) * (30 + t * 0.6f));
-                DrawFilledCircle(tex, hx, hy, 5 - (t / 8), hornColor);
+                float angle = Mathf.PI * 0.35f - (t / 60f) * 0.7f;
+                int hx = cx + 24 + (int)(Mathf.Cos(angle) * (40 + t * 1.8f));
+                int hy = 430 + (int)(Mathf.Sin(angle) * (60 + t * 1.2f));
+                DrawFilledCircle(tex, hx, hy, 10 - (t / 8), hornColor);
             }
 
-            // Tail curling to side
             Color tailColor = new Color(0.85f, 0.35f, 0.38f, 1f);
-            for (int t = 0; t <= 40; t++)
+            for (int t = 0; t <= 80; t++)
             {
-                float rad = (t / 40f) * Mathf.PI;
-                int tx = cx - 18 - (int)(Mathf.Sin(rad) * 35);
-                int ty = 95 - t + (int)(Mathf.Cos(rad) * 15);
-                DrawFilledCircle(tex, tx, ty, 4 - (t / 14), tailColor);
+                float rad = (t / 80f) * Mathf.PI;
+                int tx = cx - 36 - (int)(Mathf.Sin(rad) * 70);
+                int ty = 190 - t * 2 + (int)(Mathf.Cos(rad) * 30);
+                DrawFilledCircle(tex, tx, ty, 8 - (t / 14), tailColor);
             }
         }
 
@@ -294,33 +293,27 @@ namespace DNDBeyond.Editor
         {
             int cx = tex.width / 2;
             Color robeColor = new Color(0.35f, 0.28f, 0.55f, 1f);
-            Color trimColor = new Color(0.9f, 0.75f, 0.3f, 1f);
+            Color trimColor = new Color(0.92f, 0.78f, 0.3f, 1f);
 
-            // Robe body down past knees
-            DrawFilledRect(tex, cx - 24, 60, 48, 115, robeColor);
-            // Sleeve folds
-            DrawFilledRect(tex, cx - 38, 120, 16, 50, robeColor);
-            DrawFilledRect(tex, cx + 22, 120, 16, 50, robeColor);
-            // Golden sash trim
-            DrawFilledRect(tex, cx - 4, 60, 8, 115, trimColor);
-            DrawFilledRect(tex, cx - 22, 115, 44, 8, trimColor);
+            DrawFilledRect(tex, cx - 48, 120, 96, 230, robeColor);
+            DrawFilledRect(tex, cx - 76, 240, 32, 100, robeColor);
+            DrawFilledRect(tex, cx + 44, 240, 32, 100, robeColor);
+            DrawFilledRect(tex, cx - 8, 120, 16, 230, trimColor);
+            DrawFilledRect(tex, cx - 44, 230, 88, 16, trimColor);
         }
 
         private static void DrawLightLeatherArmor(Texture2D tex)
         {
             int cx = tex.width / 2;
             Color leather = new Color(0.55f, 0.35f, 0.20f, 1f);
-            Color darkLeather = new Color(0.40f, 0.22f, 0.12f, 1f);
+            Color darkLeather = new Color(0.38f, 0.22f, 0.12f, 1f);
 
-            // Leather cuirass
-            DrawFilledRect(tex, cx - 23, 105, 46, 75, leather);
-            // Shoulder straps
-            DrawFilledRect(tex, cx - 26, 160, 10, 20, darkLeather);
-            DrawFilledRect(tex, cx + 16, 160, 10, 20, darkLeather);
-            // Cross belt
-            for (int i = 0; i < 40; i++)
+            DrawFilledRect(tex, cx - 46, 210, 92, 150, leather);
+            DrawFilledRect(tex, cx - 52, 320, 20, 40, darkLeather);
+            DrawFilledRect(tex, cx + 32, 320, 20, 40, darkLeather);
+            for (int i = 0; i < 80; i++)
             {
-                DrawFilledCircle(tex, cx - 20 + i, 170 - i, 3, darkLeather);
+                DrawFilledCircle(tex, cx - 40 + i, 340 - i, 6, darkLeather);
             }
         }
 
@@ -330,114 +323,93 @@ namespace DNDBeyond.Editor
             Color bronze = new Color(0.70f, 0.52f, 0.28f, 1f);
             Color iron = new Color(0.45f, 0.48f, 0.52f, 1f);
 
-            // Scale breastplate
-            DrawFilledRect(tex, cx - 25, 105, 50, 75, iron);
-            // Segmented bronze scales
+            DrawFilledRect(tex, cx - 50, 210, 100, 150, iron);
             for (int row = 0; row < 5; row++)
             {
-                int y = 115 + row * 12;
+                int y = 230 + row * 24;
                 for (int col = -2; col <= 2; col++)
                 {
-                    DrawFilledCircle(tex, cx + col * 9, y, 5, bronze);
+                    DrawFilledCircle(tex, cx + col * 18, y, 10, bronze);
                 }
             }
-            // Pauldrons
-            DrawFilledCircle(tex, cx - 28, 170, 10, bronze);
-            DrawFilledCircle(tex, cx + 28, 170, 10, bronze);
+            DrawFilledCircle(tex, cx - 56, 340, 20, bronze);
+            DrawFilledCircle(tex, cx + 56, 340, 20, bronze);
         }
 
         private static void DrawHeavyPlateArmor(Texture2D tex)
         {
             int cx = tex.width / 2;
             Color steel = new Color(0.82f, 0.85f, 0.90f, 1f);
-            Color steelDark = new Color(0.55f, 0.58f, 0.65f, 1f);
+            Color steelDark = new Color(0.52f, 0.56f, 0.62f, 1f);
             Color goldTrim = new Color(0.92f, 0.75f, 0.25f, 1f);
 
-            // Full steel cuirass
-            DrawFilledRect(tex, cx - 26, 105, 52, 75, steel);
-            // Center ridge
-            DrawFilledRect(tex, cx - 3, 110, 6, 70, steelDark);
-            // Huge heavy pauldrons
-            DrawFilledRect(tex, cx - 42, 155, 18, 26, steel);
-            DrawFilledRect(tex, cx + 24, 155, 18, 26, steel);
-            DrawFilledRect(tex, cx - 42, 178, 18, 4, goldTrim);
-            DrawFilledRect(tex, cx + 24, 178, 18, 4, goldTrim);
-            // Plated faulds / tassets
-            DrawFilledRect(tex, cx - 24, 85, 48, 22, steelDark);
-            // Heavy greaves
-            DrawFilledRect(tex, cx - 19, 32, 16, 50, steel);
-            DrawFilledRect(tex, cx + 3, 32, 16, 50, steel);
+            DrawFilledRect(tex, cx - 52, 210, 104, 150, steel);
+            DrawFilledRect(tex, cx - 6, 220, 12, 140, steelDark);
+            DrawFilledRect(tex, cx - 84, 310, 36, 52, steel);
+            DrawFilledRect(tex, cx + 48, 310, 36, 52, steel);
+            DrawFilledRect(tex, cx - 84, 356, 36, 8, goldTrim);
+            DrawFilledRect(tex, cx + 48, 356, 36, 8, goldTrim);
+            DrawFilledRect(tex, cx - 48, 170, 96, 44, steelDark);
+            DrawFilledRect(tex, cx - 38, 64, 32, 100, steel);
+            DrawFilledRect(tex, cx + 6, 64, 32, 100, steel);
         }
 
         private static void DrawGreataxe(Texture2D tex)
         {
-            int cx = tex.width / 2 + 55;
+            int cx = tex.width / 2 + 110;
             Color wood = new Color(0.45f, 0.28f, 0.15f, 1f);
             Color steel = new Color(0.85f, 0.88f, 0.92f, 1f);
-            Color steelEdge = new Color(0.95f, 0.98f, 1f, 1f);
+            Color steelEdge = new Color(0.96f, 0.98f, 1f, 1f);
 
-            // Long haft
-            DrawFilledRect(tex, cx - 4, 30, 8, 180, wood);
+            DrawFilledRect(tex, cx - 8, 60, 16, 360, wood);
 
-            // Axe head at top (y=160 to 200)
-            int hy = 175;
-            // Left crescent blade
-            for (int r = 0; r <= 32; r++)
+            int hy = 350;
+            for (int r = 0; r <= 64; r++)
             {
                 int x = cx - r;
-                int h = 15 + (int)(r * 0.9f);
-                DrawFilledRect(tex, x - 2, hy - h / 2, 4, h, r > 26 ? steelEdge : steel);
+                int h = 30 + (int)(r * 0.9f);
+                DrawFilledRect(tex, x - 4, hy - h / 2, 8, h, r > 52 ? steelEdge : steel);
             }
-            // Right crescent blade
-            for (int r = 0; r <= 32; r++)
+            for (int r = 0; r <= 64; r++)
             {
                 int x = cx + r;
-                int h = 15 + (int)(r * 0.9f);
-                DrawFilledRect(tex, x - 2, hy - h / 2, 4, h, r > 26 ? steelEdge : steel);
+                int h = 30 + (int)(r * 0.9f);
+                DrawFilledRect(tex, x - 4, hy - h / 2, 8, h, r > 52 ? steelEdge : steel);
             }
-            // Center ring socket
-            DrawFilledCircle(tex, cx, hy, 10, new Color(0.3f, 0.3f, 0.35f, 1f));
+            DrawFilledCircle(tex, cx, hy, 20, new Color(0.3f, 0.3f, 0.35f, 1f));
         }
 
         private static void DrawArcaneStaff(Texture2D tex)
         {
-            int cx = tex.width / 2 + 55;
+            int cx = tex.width / 2 + 110;
             Color wood = new Color(0.52f, 0.35f, 0.22f, 1f);
             Color crystal = new Color(0.35f, 0.75f, 1.0f, 1f);
-            Color glow = new Color(0.6f, 0.9f, 1.0f, 0.7f);
+            Color glow = new Color(0.6f, 0.9f, 1.0f, 0.75f);
 
-            // Long twisting staff
-            DrawFilledRect(tex, cx - 4, 25, 8, 185, wood);
+            DrawFilledRect(tex, cx - 8, 50, 16, 370, wood);
+            DrawFilledRect(tex, cx - 24, 390, 12, 50, wood);
+            DrawFilledRect(tex, cx + 12, 390, 12, 50, wood);
 
-            // Crown prongs holding crystal
-            DrawFilledRect(tex, cx - 12, 195, 6, 25, wood);
-            DrawFilledRect(tex, cx + 6, 195, 6, 25, wood);
-
-            // Glowing arcane sphere
-            DrawFilledCircle(tex, cx, 210, 16, glow);
-            DrawFilledCircle(tex, cx, 210, 11, crystal);
-            DrawFilledCircle(tex, cx - 3, 213, 4, Color.white);
+            DrawFilledCircle(tex, cx, 420, 32, glow);
+            DrawFilledCircle(tex, cx, 420, 22, crystal);
+            DrawFilledCircle(tex, cx - 6, 426, 8, Color.white);
         }
 
         private static void DrawDagger(Texture2D tex)
         {
-            int cx = tex.width / 2 + 45;
-            int cy = 110;
+            int cx = tex.width / 2 + 90;
+            int cy = 220;
             Color steel = new Color(0.85f, 0.88f, 0.95f, 1f);
             Color gold = new Color(0.92f, 0.75f, 0.25f, 1f);
             Color grip = new Color(0.2f, 0.2f, 0.2f, 1f);
 
-            // Grip / Handle
-            DrawFilledRect(tex, cx - 3, cy - 35, 6, 30, grip);
-            // Pommel
-            DrawFilledCircle(tex, cx, cy - 36, 6, gold);
-            // Crossguard
-            DrawFilledRect(tex, cx - 16, cy - 5, 32, 6, gold);
+            DrawFilledRect(tex, cx - 6, cy - 70, 12, 60, grip);
+            DrawFilledCircle(tex, cx, cy - 72, 12, gold);
+            DrawFilledRect(tex, cx - 32, cy - 10, 64, 12, gold);
 
-            // Sharp pointed blade
-            for (int y = 0; y < 55; y++)
+            for (int y = 0; y < 110; y++)
             {
-                int halfW = (int)(8f * (1f - (float)y / 55f));
+                int halfW = (int)(16f * (1f - (float)y / 110f));
                 for (int x = cx - halfW; x <= cx + halfW; x++)
                 {
                     tex.SetPixel(x, cy + y, steel);
@@ -449,17 +421,16 @@ namespace DNDBeyond.Editor
         {
             int cx = tex.width / 2;
             int cy = tex.height / 2;
-            int r = 48;
+            int r = 105;
 
-            Color gold = new Color(0.95f, 0.78f, 0.2f, 1f);
+            Color gold = new Color(0.95f, 0.80f, 0.25f, 1f);
             Color goldDark = new Color(0.65f, 0.48f, 0.1f, 1f);
 
-            // Hexagonal icosahedron outline
             for (int y = cy - r; y <= cy + r; y++)
             {
                 for (int x = cx - r; x <= cx + r; x++)
                 {
-                    float dist = Vector2.Distance(new Vector2(x, cy), new Vector2(cx, cy));
+                    float dist = Vector2.Distance(new Vector2(x, y), new Vector2(cx, cy));
                     if (dist <= r)
                     {
                         float innerRatio = dist / r;
@@ -468,7 +439,6 @@ namespace DNDBeyond.Editor
                 }
             }
 
-            // Facet division lines
             for (int i = 0; i < 6; i++)
             {
                 float a = i * Mathf.PI / 3f;
@@ -477,20 +447,19 @@ namespace DNDBeyond.Editor
                 DrawLine(tex, cx, cy, px, py, Color.white);
             }
 
-            // Central "20"
-            DrawFilledCircle(tex, cx, cy, 14, new Color(0.2f, 0.15f, 0.05f, 0.9f));
+            DrawFilledCircle(tex, cx, cy, 32, new Color(0.18f, 0.14f, 0.05f, 0.95f));
         }
 
         private static void DrawCardFrame(Texture2D tex)
         {
-            Color border = new Color(0.4f, 0.45f, 0.5f, 1f);
-            Color fill = new Color(0.12f, 0.14f, 0.18f, 0.95f);
+            Color border = new Color(0.88f, 0.88f, 0.88f, 1f); // #E0E0E0
+            Color fill = Color.white;
 
             for (int y = 0; y < tex.height; y++)
             {
                 for (int x = 0; x < tex.width; x++)
                 {
-                    bool isBorder = x <= 3 || x >= tex.width - 4 || y <= 3 || y >= tex.height - 4;
+                    bool isBorder = x <= 2 || x >= tex.width - 3 || y <= 2 || y >= tex.height - 3;
                     tex.SetPixel(x, y, isBorder ? border : fill);
                 }
             }
@@ -552,11 +521,16 @@ namespace DNDBeyond.Editor
 
         #endregion
 
-        #region ScriptableObjects Creation
+        #region ScriptableObjects Creation (All 12 Classes in Alphabetical Order)
 
         private static Sprite LoadSprite(string name)
         {
             return AssetDatabase.LoadAssetAtPath<Sprite>($"{SPRITES_DIR}/{name}.png");
+        }
+
+        private static Sprite LoadClassLogoSprite(string className)
+        {
+            return AssetDatabase.LoadAssetAtPath<Sprite>($"{SPRITES_DIR}/Classes/{className.ToLower()}.svg");
         }
 
         private static List<CharacterOptionSO> CreateScriptableObjects()
@@ -564,7 +538,7 @@ namespace DNDBeyond.Editor
             List<CharacterOptionSO> list = new List<CharacterOptionSO>();
 
             // Races
-            var elf = CreateOrUpdateOption<CharacterOptionSO>("race_elf", "Elf", OptionCategory.Race, opt =>
+            list.Add(CreateOrUpdateOption<CharacterOptionSO>("race_elf", "Elf", OptionCategory.Race, opt =>
             {
                 opt.raceType = CharacterRace.Elf;
                 opt.icon = LoadSprite("spr_elf_ears");
@@ -572,10 +546,9 @@ namespace DNDBeyond.Editor
                 opt.primaryColor = new Color(0.96f, 0.88f, 0.82f);
                 opt.flavorTagline = "Fey Ancestry & Keen Senses";
                 opt.description = "Graceful humanoid with pointed ears and natural affinity for arcane dexterity.";
-            });
-            list.Add(elf);
+            }));
 
-            var tiefling = CreateOrUpdateOption<CharacterOptionSO>("race_tiefling", "Tiefling", OptionCategory.Race, opt =>
+            list.Add(CreateOrUpdateOption<CharacterOptionSO>("race_tiefling", "Tiefling", OptionCategory.Race, opt =>
             {
                 opt.raceType = CharacterRace.Tiefling;
                 opt.icon = LoadSprite("spr_tiefling_horns");
@@ -583,34 +556,131 @@ namespace DNDBeyond.Editor
                 opt.primaryColor = new Color(0.85f, 0.35f, 0.38f);
                 opt.flavorTagline = "Hellish Resistance & Darkvision";
                 opt.description = "Horned humanoid bearing the infernal heritage of the Lower Planes.";
-            });
-            list.Add(tiefling);
+            }));
 
-            // Classes
-            var barbarian = CreateOrUpdateOption<CharacterOptionSO>("class_barbarian", "Barbarian", OptionCategory.Class, opt =>
+            // ALL 12 CORE CLASSES IN STRICT ALPHABETICAL ORDER (FEELING-FOCUSED 1-SENTENCE HOOKS & D&D BEYOND LOGOS)
+            list.Add(CreateOrUpdateOption<CharacterOptionSO>("class_barbarian", "Barbarian", OptionCategory.Class, opt =>
             {
                 opt.classType = CharacterClass.Barbarian;
-                opt.icon = LoadSprite("spr_weapon_greataxe");
+                opt.icon = LoadClassLogoSprite("barbarian");
                 opt.mannequinSprite = LoadSprite("spr_pedestal_aura");
-                opt.primaryColor = new Color(0.95f, 0.35f, 0.15f);
-                opt.flavorTagline = "Primal Rage & Unarmored Defense";
-                opt.description = "Fierce warrior who channels primal fury into unmatched resilience and martial prowess.";
-            });
-            list.Add(barbarian);
+                opt.primaryColor = new Color(0.90f, 0.29f, 0.10f); // Crimson/Orange
+                opt.flavorTagline = "A fierce warrior driven by primal fury who charges headfirst into the heat of battle.";
+                opt.description = "A fierce warrior driven by primal fury who charges headfirst into the heat of battle.";
+            }));
 
-            var wizard = CreateOrUpdateOption<CharacterOptionSO>("class_wizard", "Wizard", OptionCategory.Class, opt =>
+            list.Add(CreateOrUpdateOption<CharacterOptionSO>("class_bard", "Bard", OptionCategory.Class, opt =>
+            {
+                opt.classType = CharacterClass.Bard;
+                opt.icon = LoadClassLogoSprite("bard");
+                opt.mannequinSprite = LoadSprite("spr_pedestal_aura");
+                opt.primaryColor = new Color(0.85f, 0.11f, 0.38f); // Magenta
+                opt.flavorTagline = "An inspiring performer and charismatic storyteller whose music weaves enchantment and wonder.";
+                opt.description = "An inspiring performer and charismatic storyteller whose music weaves enchantment and wonder.";
+            }));
+
+            list.Add(CreateOrUpdateOption<CharacterOptionSO>("class_cleric", "Cleric", OptionCategory.Class, opt =>
+            {
+                opt.classType = CharacterClass.Cleric;
+                opt.icon = LoadClassLogoSprite("cleric");
+                opt.mannequinSprite = LoadSprite("spr_pedestal_aura");
+                opt.primaryColor = new Color(0.99f, 0.85f, 0.21f); // Radiant Gold
+                opt.flavorTagline = "A devout champion of the gods who channels divine light, miracles, and protective magic.";
+                opt.description = "A devout champion of the gods who channels divine light, miracles, and protective magic.";
+            }));
+
+            list.Add(CreateOrUpdateOption<CharacterOptionSO>("class_druid", "Druid", OptionCategory.Class, opt =>
+            {
+                opt.classType = CharacterClass.Druid;
+                opt.icon = LoadClassLogoSprite("druid");
+                opt.mannequinSprite = LoadSprite("spr_pedestal_aura");
+                opt.primaryColor = new Color(0.26f, 0.63f, 0.28f); // Forest Green
+                opt.flavorTagline = "A guardian of the wilderness who commands the forces of nature and transforms into mighty beasts.";
+                opt.description = "A guardian of the wilderness who commands the forces of nature and transforms into mighty beasts.";
+            }));
+
+            list.Add(CreateOrUpdateOption<CharacterOptionSO>("class_fighter", "Fighter", OptionCategory.Class, opt =>
+            {
+                opt.classType = CharacterClass.Fighter;
+                opt.icon = LoadClassLogoSprite("fighter");
+                opt.mannequinSprite = LoadSprite("spr_pedestal_aura");
+                opt.primaryColor = new Color(0.33f, 0.43f, 0.48f); // Steel Blue
+                opt.flavorTagline = "A master of weapons and battlefield tactics who conquers danger with pure combat skill.";
+                opt.description = "A master of weapons and battlefield tactics who conquers danger with pure combat skill.";
+            }));
+
+            list.Add(CreateOrUpdateOption<CharacterOptionSO>("class_monk", "Monk", OptionCategory.Class, opt =>
+            {
+                opt.classType = CharacterClass.Monk;
+                opt.icon = LoadClassLogoSprite("monk");
+                opt.mannequinSprite = LoadSprite("spr_pedestal_aura");
+                opt.primaryColor = new Color(0.00f, 0.67f, 0.76f); // Cyan
+                opt.flavorTagline = "A disciplined martial artist who channels spiritual inner ki into lightning-fast unarmed strikes.";
+                opt.description = "A disciplined martial artist who channels spiritual inner ki into lightning-fast unarmed strikes.";
+            }));
+
+            list.Add(CreateOrUpdateOption<CharacterOptionSO>("class_paladin", "Paladin", OptionCategory.Class, opt =>
+            {
+                opt.classType = CharacterClass.Paladin;
+                opt.icon = LoadClassLogoSprite("paladin");
+                opt.mannequinSprite = LoadSprite("spr_pedestal_aura");
+                opt.primaryColor = new Color(1.00f, 0.63f, 0.00f); // Amber Gold
+                opt.flavorTagline = "A noble warrior bound by a sacred oath to smite evil and stand as an unyielding beacon of hope.";
+                opt.description = "A noble warrior bound by a sacred oath to smite evil and stand as an unyielding beacon of hope.";
+            }));
+
+            list.Add(CreateOrUpdateOption<CharacterOptionSO>("class_ranger", "Ranger", OptionCategory.Class, opt =>
+            {
+                opt.classType = CharacterClass.Ranger;
+                opt.icon = LoadClassLogoSprite("ranger");
+                opt.mannequinSprite = LoadSprite("spr_pedestal_aura");
+                opt.primaryColor = new Color(0.18f, 0.49f, 0.20f); // Hunter Emerald
+                opt.flavorTagline = "A master tracker and scout who walks the untamed frontiers with deadly precision and wilderness magic.";
+                opt.description = "A master tracker and scout who walks the untamed frontiers with deadly precision and wilderness magic.";
+            }));
+
+            list.Add(CreateOrUpdateOption<CharacterOptionSO>("class_rogue", "Rogue", OptionCategory.Class, opt =>
+            {
+                opt.classType = CharacterClass.Rogue;
+                opt.icon = LoadClassLogoSprite("rogue");
+                opt.mannequinSprite = LoadSprite("spr_pedestal_aura");
+                opt.primaryColor = new Color(0.37f, 0.21f, 0.69f); // Shadow Violet
+                opt.flavorTagline = "A cunning trickster who excels in stealth, agility, and striking lethal blows from the shadows.";
+                opt.description = "A cunning trickster who excels in stealth, agility, and striking lethal blows from the shadows.";
+            }));
+
+            list.Add(CreateOrUpdateOption<CharacterOptionSO>("class_sorcerer", "Sorcerer", OptionCategory.Class, opt =>
+            {
+                opt.classType = CharacterClass.Sorcerer;
+                opt.icon = LoadClassLogoSprite("sorcerer");
+                opt.mannequinSprite = LoadSprite("spr_pedestal_aura");
+                opt.primaryColor = new Color(0.76f, 0.09f, 0.36f); // Arcane Crimson
+                opt.flavorTagline = "A passionate magic wielder born with wild, raw arcane power coursing through their veins.";
+                opt.description = "A passionate magic wielder born with wild, raw arcane power coursing through their veins.";
+            }));
+
+            list.Add(CreateOrUpdateOption<CharacterOptionSO>("class_warlock", "Warlock", OptionCategory.Class, opt =>
+            {
+                opt.classType = CharacterClass.Warlock;
+                opt.icon = LoadClassLogoSprite("warlock");
+                opt.mannequinSprite = LoadSprite("spr_pedestal_aura");
+                opt.primaryColor = new Color(0.42f, 0.11f, 0.60f); // Eldritch Purple
+                opt.flavorTagline = "A seeker of occult secrets who draws eerie eldritch power from a pact with an otherworldly patron.";
+                opt.description = "A seeker of occult secrets who draws eerie eldritch power from a pact with an otherworldly patron.";
+            }));
+
+            list.Add(CreateOrUpdateOption<CharacterOptionSO>("class_wizard", "Wizard", OptionCategory.Class, opt =>
             {
                 opt.classType = CharacterClass.Wizard;
-                opt.icon = LoadSprite("spr_weapon_staff");
+                opt.icon = LoadClassLogoSprite("wizard");
                 opt.mannequinSprite = LoadSprite("spr_pedestal_aura");
-                opt.primaryColor = new Color(0.25f, 0.65f, 1.0f);
-                opt.flavorTagline = "Arcane Spellcasting & Spellbook";
-                opt.description = "Scholarly magic-user capable of manipulating reality through study and arcane focus.";
-            });
-            list.Add(wizard);
+                opt.primaryColor = new Color(0.12f, 0.53f, 0.90f); // Arcane Sapphire
+                opt.flavorTagline = "A scholarly master of the arcane who bends reality to their will through intellect and spellbooks.";
+                opt.description = "A scholarly master of the arcane who bends reality to their will through intellect and spellbooks.";
+            }));
 
-            // Armor (EquipmentSO)
-            var robes = CreateOrUpdateOption<EquipmentSO>("armor_robes", "Cloth Robes", OptionCategory.Armor, eq =>
+            // Armors
+            list.Add(CreateOrUpdateOption<EquipmentSO>("armor_robes", "Cloth Robes", OptionCategory.Armor, eq =>
             {
                 eq.armorType = ArmorType.None;
                 eq.baseAC = 10;
@@ -620,10 +690,9 @@ namespace DNDBeyond.Editor
                 eq.primaryColor = new Color(0.45f, 0.38f, 0.65f);
                 eq.flavorTagline = "Unarmored Attire (No Restriction)";
                 eq.description = "Comfortable, unrestrictive scholar robes allowing complete somatic freedom.";
-            });
-            list.Add(robes);
+            }));
 
-            var lightArmor = CreateOrUpdateOption<EquipmentSO>("armor_light", "Leather Armor", OptionCategory.Armor, eq =>
+            list.Add(CreateOrUpdateOption<EquipmentSO>("armor_light", "Leather Armor", OptionCategory.Armor, eq =>
             {
                 eq.armorType = ArmorType.Light;
                 eq.baseAC = 11;
@@ -633,10 +702,9 @@ namespace DNDBeyond.Editor
                 eq.primaryColor = new Color(0.55f, 0.35f, 0.20f);
                 eq.flavorTagline = "Light Armor (AC 11 + Full DEX)";
                 eq.description = "Supple molded leather offering protection without impeding agility or stealth.";
-            });
-            list.Add(lightArmor);
+            }));
 
-            var medArmor = CreateOrUpdateOption<EquipmentSO>("armor_medium", "Scale Mail", OptionCategory.Armor, eq =>
+            list.Add(CreateOrUpdateOption<EquipmentSO>("armor_medium", "Scale Mail", OptionCategory.Armor, eq =>
             {
                 eq.armorType = ArmorType.Medium;
                 eq.baseAC = 14;
@@ -646,10 +714,9 @@ namespace DNDBeyond.Editor
                 eq.primaryColor = new Color(0.70f, 0.52f, 0.28f);
                 eq.flavorTagline = "Medium Armor (AC 14 + DEX max 2)";
                 eq.description = "Overlapping bronze and iron scales. Sturdy protection, but causes disadvantage on stealth.";
-            });
-            list.Add(medArmor);
+            }));
 
-            var heavyArmor = CreateOrUpdateOption<EquipmentSO>("armor_heavy", "Plate Armor", OptionCategory.Armor, eq =>
+            list.Add(CreateOrUpdateOption<EquipmentSO>("armor_heavy", "Plate Armor", OptionCategory.Armor, eq =>
             {
                 eq.armorType = ArmorType.Heavy;
                 eq.baseAC = 18;
@@ -659,11 +726,10 @@ namespace DNDBeyond.Editor
                 eq.primaryColor = new Color(0.85f, 0.88f, 0.92f);
                 eq.flavorTagline = "Heavy Armor (AC 18 Flat, Disadv Stealth)";
                 eq.description = "Interlocking steel plates covering the entire body. Maximum AC, but requires heavy armor proficiency.";
-            });
-            list.Add(heavyArmor);
+            }));
 
-            // Weapons (EquipmentSO)
-            var greataxe = CreateOrUpdateOption<EquipmentSO>("weapon_greataxe", "Greataxe", OptionCategory.Weapon, eq =>
+            // Weapons
+            list.Add(CreateOrUpdateOption<EquipmentSO>("weapon_greataxe", "Greataxe", OptionCategory.Weapon, eq =>
             {
                 eq.weaponType = WeaponType.Greataxe;
                 eq.damage = "1d12";
@@ -675,10 +741,9 @@ namespace DNDBeyond.Editor
                 eq.primaryColor = Color.white;
                 eq.flavorTagline = "1d12 Slashing (Martial Heavy)";
                 eq.description = "Massive bearded axe capable of cleaving through enemies in frenzy.";
-            });
-            list.Add(greataxe);
+            }));
 
-            var staff = CreateOrUpdateOption<EquipmentSO>("weapon_staff", "Arcane Staff", OptionCategory.Weapon, eq =>
+            list.Add(CreateOrUpdateOption<EquipmentSO>("weapon_staff", "Arcane Staff", OptionCategory.Weapon, eq =>
             {
                 eq.weaponType = WeaponType.ArcaneStaff;
                 eq.damage = "1d6";
@@ -690,10 +755,9 @@ namespace DNDBeyond.Editor
                 eq.primaryColor = Color.white;
                 eq.flavorTagline = "1d6 Bludgeoning (Arcane Focus)";
                 eq.description = "Quarterstaff crowned with an attuned crystal orb, channeling magical spells.";
-            });
-            list.Add(staff);
+            }));
 
-            var dagger = CreateOrUpdateOption<EquipmentSO>("weapon_dagger", "Dagger", OptionCategory.Weapon, eq =>
+            list.Add(CreateOrUpdateOption<EquipmentSO>("weapon_dagger", "Dagger", OptionCategory.Weapon, eq =>
             {
                 eq.weaponType = WeaponType.Dagger;
                 eq.damage = "1d4";
@@ -705,8 +769,7 @@ namespace DNDBeyond.Editor
                 eq.primaryColor = Color.white;
                 eq.flavorTagline = "1d4 Piercing (Finesse, Light)";
                 eq.description = "Swift and easily concealed blade suitable for precision strikes.";
-            });
-            list.Add(dagger);
+            }));
 
             return list;
         }
@@ -732,8 +795,8 @@ namespace DNDBeyond.Editor
         {
             List<HarmonyRuleSO> rules = new List<HarmonyRuleSO>();
 
-            // Rule 1: Barbarian + Heavy Armor (Quirk)
-            rules.Add(CreateOrUpdateRule("rule_barbarian_heavy_armor", "Barbarians & Heavy Armor", r =>
+            // Barbarian + Heavy Armor Quirk
+            rules.Add(CreateOrUpdateRule("rule_barbarian_heavy_armor", "Rule Quirk: Barbarians & Heavy Armor", r =>
             {
                 r.harmonyState = HarmonyState.DiscoveryQuirk;
                 r.priority = 100;
@@ -741,12 +804,49 @@ namespace DNDBeyond.Editor
                 r.requiredClass = CharacterClass.Barbarian;
                 r.checkArmor = true;
                 r.requiredArmor = ArmorType.Heavy;
-                r.shortStatus = "Rage Restriction";
-                r.insightNoteText = "Barbarians are free to wear heavy armor, but their signature feature — Rage — does not grant damage resistance or bonus damage while wearing it!";
+                r.shortStatus = "Rage Disabled in Heavy Armor";
+                r.insightNoteText = "Barbarians can equip heavy armor, but their signature feature — Rage — does not grant damage resistance or bonus damage while wearing it!";
             }));
 
-            // Rule 2: Wizard + Heavy Armor (Quirk)
-            rules.Add(CreateOrUpdateRule("rule_wizard_heavy_armor", "Spellcasting Blocked!", r =>
+            // Monk + Any Armor Quirk
+            rules.Add(CreateOrUpdateRule("rule_monk_heavy_armor", "Rule Quirk: Monks & Armor", r =>
+            {
+                r.harmonyState = HarmonyState.DiscoveryQuirk;
+                r.priority = 100;
+                r.checkClass = true;
+                r.requiredClass = CharacterClass.Monk;
+                r.checkArmor = true;
+                r.requiredArmor = ArmorType.Heavy;
+                r.shortStatus = "Martial Arts & Movement Disabled";
+                r.insightNoteText = "Monks lose their Martial Arts, Unarmored Movement, and Unarmored Defense benefits when wearing any armor!";
+            }));
+
+            rules.Add(CreateOrUpdateRule("rule_monk_medium_armor", "Rule Quirk: Monks & Armor", r =>
+            {
+                r.harmonyState = HarmonyState.DiscoveryQuirk;
+                r.priority = 95;
+                r.checkClass = true;
+                r.requiredClass = CharacterClass.Monk;
+                r.checkArmor = true;
+                r.requiredArmor = ArmorType.Medium;
+                r.shortStatus = "Martial Arts & Movement Disabled";
+                r.insightNoteText = "Monks lose their Martial Arts, Unarmored Movement, and Unarmored Defense benefits when wearing armor!";
+            }));
+
+            rules.Add(CreateOrUpdateRule("rule_monk_light_armor", "Rule Quirk: Monks & Armor", r =>
+            {
+                r.harmonyState = HarmonyState.DiscoveryQuirk;
+                r.priority = 90;
+                r.checkClass = true;
+                r.requiredClass = CharacterClass.Monk;
+                r.checkArmor = true;
+                r.requiredArmor = ArmorType.Light;
+                r.shortStatus = "Martial Arts & Movement Disabled";
+                r.insightNoteText = "Even light armor negates a Monk's Martial Arts and Unarmored Defense features!";
+            }));
+
+            // Wizard + Heavy/Med/Light Quirk
+            rules.Add(CreateOrUpdateRule("rule_wizard_heavy_armor", "Rule Quirk: Non-Proficient Armor", r =>
             {
                 r.harmonyState = HarmonyState.DiscoveryQuirk;
                 r.priority = 100;
@@ -754,12 +854,11 @@ namespace DNDBeyond.Editor
                 r.requiredClass = CharacterClass.Wizard;
                 r.checkArmor = true;
                 r.requiredArmor = ArmorType.Heavy;
-                r.shortStatus = "Non-Proficient Armor";
-                r.insightNoteText = "In D&D 5e, wearing armor you aren't proficient with prevents you from casting any spells! Wizards lack heavy armor proficiency.";
+                r.shortStatus = "Spellcasting Completely Blocked";
+                r.insightNoteText = "In D&D 5e, wearing armor you lack proficiency with prevents you from casting any spells! Wizards lack heavy armor proficiency.";
             }));
 
-            // Rule 3: Wizard + Medium Armor (Quirk)
-            rules.Add(CreateOrUpdateRule("rule_wizard_medium_armor", "Spellcasting Blocked!", r =>
+            rules.Add(CreateOrUpdateRule("rule_wizard_medium_armor", "Rule Quirk: Non-Proficient Armor", r =>
             {
                 r.harmonyState = HarmonyState.DiscoveryQuirk;
                 r.priority = 90;
@@ -767,12 +866,11 @@ namespace DNDBeyond.Editor
                 r.requiredClass = CharacterClass.Wizard;
                 r.checkArmor = true;
                 r.requiredArmor = ArmorType.Medium;
-                r.shortStatus = "Non-Proficient Armor";
-                r.insightNoteText = "Wizards lack proficiency with medium armor. Wearing armor without proficiency completely halts all spellcasting gestures!";
+                r.shortStatus = "Spellcasting Completely Blocked";
+                r.insightNoteText = "Wizards lack proficiency with medium armor. Wearing armor without proficiency completely blocks all spellcasting gestures!";
             }));
 
-            // Rule 4: Wizard + Light Armor (Quirk)
-            rules.Add(CreateOrUpdateRule("rule_wizard_light_armor", "Armor Non-Proficiency", r =>
+            rules.Add(CreateOrUpdateRule("rule_wizard_light_armor", "Rule Quirk: Non-Proficient Armor", r =>
             {
                 r.harmonyState = HarmonyState.DiscoveryQuirk;
                 r.priority = 85;
@@ -780,12 +878,90 @@ namespace DNDBeyond.Editor
                 r.requiredClass = CharacterClass.Wizard;
                 r.checkArmor = true;
                 r.requiredArmor = ArmorType.Light;
-                r.shortStatus = "Non-Proficient Armor";
+                r.shortStatus = "Spellcasting Blocked";
                 r.insightNoteText = "Standard Wizards lack Light Armor proficiency. You cannot cast spells while wearing armor you are not proficient with!";
             }));
 
-            // Rule 5: Barbarian + Greataxe + Medium/Robes (Peak Synergy)
-            rules.Add(CreateOrUpdateRule("rule_barbarian_peak_fury", "Peak Primal Fury!", r =>
+            // Sorcerer + Heavy/Med/Light Armor Quirk
+            rules.Add(CreateOrUpdateRule("rule_sorcerer_heavy_armor", "Rule Quirk: Non-Proficient Armor", r =>
+            {
+                r.harmonyState = HarmonyState.DiscoveryQuirk;
+                r.priority = 100;
+                r.checkClass = true;
+                r.requiredClass = CharacterClass.Sorcerer;
+                r.checkArmor = true;
+                r.requiredArmor = ArmorType.Heavy;
+                r.shortStatus = "Innate Magic Blocked";
+                r.insightNoteText = "Sorcerers possess no armor proficiencies. Non-proficient heavy armor restricts somatic movements and halts all spellcasting!";
+            }));
+
+            // Rogue + Heavy Armor Quirk
+            rules.Add(CreateOrUpdateRule("rule_rogue_heavy_armor", "Rule Quirk: Stealth Disadvantage", r =>
+            {
+                r.harmonyState = HarmonyState.DiscoveryQuirk;
+                r.priority = 90;
+                r.checkClass = true;
+                r.requiredClass = CharacterClass.Rogue;
+                r.checkArmor = true;
+                r.requiredArmor = ArmorType.Heavy;
+                r.shortStatus = "Stealth Disadvantage & Attack Penalties";
+                r.insightNoteText = "Rogues lack heavy armor proficiency. It imposes disadvantage on Dexterity ability checks (including Stealth) and attack rolls!";
+            }));
+
+            // Druid + Heavy Metal Armor Quirk
+            rules.Add(CreateOrUpdateRule("rule_druid_heavy_armor", "Rule Quirk: Druidic Taboo", r =>
+            {
+                r.harmonyState = HarmonyState.DiscoveryQuirk;
+                r.priority = 90;
+                r.checkClass = true;
+                r.requiredClass = CharacterClass.Druid;
+                r.checkArmor = true;
+                r.requiredArmor = ArmorType.Heavy;
+                r.shortStatus = "Metal Armor Taboo";
+                r.insightNoteText = "Druids hold an ancient spiritual taboo against wearing armor made of worked metal, preferring natural materials like hides and treated wood.";
+            }));
+
+            // Fighter + Heavy Armor Synergy
+            rules.Add(CreateOrUpdateRule("rule_fighter_heavy_armor", "Harmonious Synergy: Frontline Master", r =>
+            {
+                r.harmonyState = HarmonyState.Harmonious;
+                r.priority = 65;
+                r.checkClass = true;
+                r.requiredClass = CharacterClass.Fighter;
+                r.checkArmor = true;
+                r.requiredArmor = ArmorType.Heavy;
+                r.shortStatus = "Master of Heavy Armor (AC 18)";
+                r.insightNoteText = "Full Heavy Armor proficiency grants maximum protection (AC 18), allowing you to hold the frontline with unmatched resilience!";
+            }));
+
+            // Paladin + Heavy Armor Synergy
+            rules.Add(CreateOrUpdateRule("rule_paladin_heavy_armor", "Harmonious Synergy: Holy Knight", r =>
+            {
+                r.harmonyState = HarmonyState.Harmonious;
+                r.priority = 65;
+                r.checkClass = true;
+                r.requiredClass = CharacterClass.Paladin;
+                r.checkArmor = true;
+                r.requiredArmor = ArmorType.Heavy;
+                r.shortStatus = "Crusader Resilience (AC 18)";
+                r.insightNoteText = "Paladins are trained to fight in heavy plate armor. Maximizes your survivability while delivering divine smites in melee!";
+            }));
+
+            // Monk + Unarmored Synergy
+            rules.Add(CreateOrUpdateRule("rule_monk_unarmored", "Harmonious Synergy: Martial Arts", r =>
+            {
+                r.harmonyState = HarmonyState.Harmonious;
+                r.priority = 60;
+                r.checkClass = true;
+                r.requiredClass = CharacterClass.Monk;
+                r.checkArmor = true;
+                r.requiredArmor = ArmorType.None;
+                r.shortStatus = "Unarmored Defense Active (AC 15)";
+                r.insightNoteText = "While unarmored, your Armor Class equals 10 + Dexterity modifier + Wisdom modifier (Base AC 15) and your Martial Arts mobility is fully active!";
+            }));
+
+            // Barbarian + Greataxe + Medium/Robes Synergy
+            rules.Add(CreateOrUpdateRule("rule_barbarian_peak_fury", "Harmonious Synergy: Primal Fury", r =>
             {
                 r.harmonyState = HarmonyState.Harmonious;
                 r.priority = 60;
@@ -793,12 +969,25 @@ namespace DNDBeyond.Editor
                 r.requiredClass = CharacterClass.Barbarian;
                 r.checkWeapon = true;
                 r.requiredWeapon = WeaponType.Greataxe;
-                r.shortStatus = "Peak Martial Harmony";
-                r.insightNoteText = "Peak Harmony: Full Rage benefits active! Wielding a two-handed Greataxe empowers Reckless Attack for massive 1d12 slashing damage.";
+                r.shortStatus = "Peak Martial Synergy";
+                r.insightNoteText = "Peak Synergy: Full Rage benefits active! Wielding a two-handed Greataxe empowers Reckless Attack for massive 1d12 slashing damage.";
             }));
 
-            // Rule 6: Wizard + Arcane Staff (Synergy)
-            rules.Add(CreateOrUpdateRule("rule_wizard_arcane_staff", "Arcane Focus Attuned", r =>
+            // Rogue + Dagger Synergy
+            rules.Add(CreateOrUpdateRule("rule_rogue_dagger", "Harmonious Synergy: Sneak Attack", r =>
+            {
+                r.harmonyState = HarmonyState.Harmonious;
+                r.priority = 55;
+                r.checkClass = true;
+                r.requiredClass = CharacterClass.Rogue;
+                r.checkWeapon = true;
+                r.requiredWeapon = WeaponType.Dagger;
+                r.shortStatus = "Finesse Sneak Attack Ready";
+                r.insightNoteText = "Daggers possess the Finesse property, qualifying for your deadly Sneak Attack extra damage!";
+            }));
+
+            // Wizard + Arcane Staff Synergy
+            rules.Add(CreateOrUpdateRule("rule_wizard_arcane_staff", "Harmonious Synergy: Arcane Focus", r =>
             {
                 r.harmonyState = HarmonyState.Harmonious;
                 r.priority = 50;
@@ -806,34 +995,8 @@ namespace DNDBeyond.Editor
                 r.requiredClass = CharacterClass.Wizard;
                 r.checkWeapon = true;
                 r.requiredWeapon = WeaponType.ArcaneStaff;
-                r.shortStatus = "Spellcasting Focus";
+                r.shortStatus = "Spellcasting Focus Attuned";
                 r.insightNoteText = "Your quarterstaff doubles as an Arcane Focus, channeling spells cleanly without needing a material component pouch.";
-            }));
-
-            // Rule 7: Barbarian + Unarmored (Synergy)
-            rules.Add(CreateOrUpdateRule("rule_barbarian_unarmored", "Unarmored Defense", r =>
-            {
-                r.harmonyState = HarmonyState.Harmonious;
-                r.priority = 45;
-                r.checkClass = true;
-                r.requiredClass = CharacterClass.Barbarian;
-                r.checkArmor = true;
-                r.requiredArmor = ArmorType.None;
-                r.shortStatus = "Unarmored Defense (AC 15)";
-                r.insightNoteText = "While not wearing armor, your Armor Class equals 10 + Dexterity modifier + Constitution modifier (Base AC 15)!";
-            }));
-
-            // Rule 8: Wizard + Robes (Synergy)
-            rules.Add(CreateOrUpdateRule("rule_wizard_robes", "Unrestricted Casting", r =>
-            {
-                r.harmonyState = HarmonyState.Harmonious;
-                r.priority = 40;
-                r.checkClass = true;
-                r.requiredClass = CharacterClass.Wizard;
-                r.checkArmor = true;
-                r.requiredArmor = ArmorType.None;
-                r.shortStatus = "Full Spellcasting Freedom";
-                r.insightNoteText = "Flowing cloth robes allow free somatic spellcasting gestures and synergize seamlessly with Mage Armor!";
             }));
 
             return rules;
@@ -871,44 +1034,57 @@ namespace DNDBeyond.Editor
             cam.orthographic = true;
             cam.orthographicSize = 5f;
             cam.clearFlags = CameraClearFlags.SolidColor;
-            cam.backgroundColor = new Color(0.08f, 0.09f, 0.12f, 1f);
+            cam.backgroundColor = new Color(0.96f, 0.96f, 0.95f, 1f); // D&D Beyond Parchment #F5F5F3
             cam.transform.position = new Vector3(0, 0, -10f);
         }
 
         private static GameObject SetupMannequin()
         {
             GameObject mannequin = GameObject.Find("ModularMannequin");
-            if (mannequin == null)
+            if (mannequin != null)
             {
-                mannequin = new GameObject("ModularMannequin");
+                UnityEngine.Object.DestroyImmediate(mannequin);
             }
-            mannequin.transform.position = new Vector3(0f, 0.35f, 0f);
-            mannequin.transform.localScale = Vector3.one * 1.55f;
+            mannequin = new GameObject("ModularMannequin");
+
+            // Position mannequin: X = -1.2 (centered between left and right UI), Y = 0.15
+            // Soles are at -2.12 in local space. With scale 1.42: soles are at Y = 0.15 + (-2.12 * 1.42) = -2.86!
+            // Pedestal localPos Y = -2.44 places the pedestal top at -2.44 + 0.32 = -2.12 (perfect flush under soles of feet at Y = -2.86!)
+            mannequin.transform.position = new Vector3(-1.2f, 0.15f, 0f);
+            mannequin.transform.localScale = new Vector3(1.42f, 1.42f, 1.42f);
 
             var paperDoll = mannequin.GetComponent<PaperDollView>();
             if (paperDoll == null) paperDoll = mannequin.AddComponent<PaperDollView>();
+            paperDoll.SetBaseScale(new Vector3(1.42f, 1.42f, 1.42f));
 
-            // Layers
-            var pedestal = GetOrCreateLayerChild(mannequin, "0_Pedestal", 0, LoadSprite("spr_pedestal"), Color.white);
-            var aura = GetOrCreateLayerChild(mannequin, "1_PedestalAura", 1, LoadSprite("spr_pedestal_aura"), new Color(0.95f, 0.35f, 0.15f, 0.6f));
-            var body = GetOrCreateLayerChild(mannequin, "2_BodyBase", 2, LoadSprite("spr_body"), new Color(0.96f, 0.88f, 0.82f));
-            var raceFeatures = GetOrCreateLayerChild(mannequin, "3_RaceFeatures", 3, LoadSprite("spr_tiefling_horns"), new Color(0.85f, 0.35f, 0.38f));
-            var clothes = GetOrCreateLayerChild(mannequin, "4_Clothes", 4, LoadSprite("spr_clothes"), Color.white);
-            var armor = GetOrCreateLayerChild(mannequin, "5_ArmorOverlay", 5, LoadSprite("spr_armor_heavy"), Color.white);
-            var hair = GetOrCreateLayerChild(mannequin, "6_Hair", 6, LoadSprite("spr_hair"), Color.white);
-            var weapon = GetOrCreateLayerChild(mannequin, "7_Weapon", 7, LoadSprite("spr_weapon_greataxe"), Color.white);
+            // CRITICAL: Platform sprite localPosition = (0, -2.44, 0) places top surface directly flush under soles of feet!
+            var pedestal = GetOrCreateLayerChild(mannequin, "0_Pedestal", 0, LoadSprite("spr_pedestal"), Color.white, new Vector3(0f, -2.44f, 0f));
+            var aura = GetOrCreateLayerChild(mannequin, "1_PedestalAura", 1, LoadSprite("spr_pedestal_aura"), new Color(0.90f, 0.29f, 0.10f, 0.65f), new Vector3(0f, -2.44f, 0f));
+            aura.enabled = false; // Clean slate: no pre-attached aura
+
+            var body = GetOrCreateLayerChild(mannequin, "2_BodyBase", 2, LoadSprite("spr_body"), new Color(0.92f, 0.85f, 0.80f), Vector3.zero);
+            var raceFeatures = GetOrCreateLayerChild(mannequin, "3_RaceFeatures", 3, LoadSprite("spr_tiefling_horns"), new Color(0.85f, 0.35f, 0.38f), Vector3.zero);
+            raceFeatures.enabled = false; // Clean slate: no pre-attached race features
+
+            var clothes = GetOrCreateLayerChild(mannequin, "4_Clothes", 4, LoadSprite("spr_clothes"), Color.white, Vector3.zero);
+            var armor = GetOrCreateLayerChild(mannequin, "5_ArmorOverlay", 5, LoadSprite("spr_armor_heavy"), Color.white, Vector3.zero);
+            armor.enabled = false; // Clean slate: no pre-attached armor
+
+            var hair = GetOrCreateLayerChild(mannequin, "6_Hair", 6, LoadSprite("spr_hair"), Color.white, Vector3.zero);
+            var weapon = GetOrCreateLayerChild(mannequin, "7_Weapon", 7, LoadSprite("spr_weapon_greataxe"), Color.white, Vector3.zero);
+            weapon.enabled = false; // Clean slate: no pre-attached weapon
 
             paperDoll.AssignRenderers(pedestal, aura, body, raceFeatures, clothes, armor, hair, weapon);
 
             return mannequin;
         }
 
-        private static SpriteRenderer GetOrCreateLayerChild(GameObject parent, string name, int order, Sprite sprite, Color color)
+        private static SpriteRenderer GetOrCreateLayerChild(GameObject parent, string name, int order, Sprite sprite, Color color, Vector3 localPos)
         {
             Transform childTr = parent.transform.Find(name);
             GameObject go = childTr != null ? childTr.gameObject : new GameObject(name);
             go.transform.SetParent(parent.transform, false);
-            go.transform.localPosition = Vector3.zero;
+            go.transform.localPosition = localPos;
 
             var sr = go.GetComponent<SpriteRenderer>();
             if (sr == null) sr = go.AddComponent<SpriteRenderer>();
@@ -920,16 +1096,15 @@ namespace DNDBeyond.Editor
 
         private static void SetupEventSystem()
         {
-            var es = Object.FindAnyObjectByType<UnityEngine.EventSystems.EventSystem>();
+            var es = UnityEngine.Object.FindAnyObjectByType<UnityEngine.EventSystems.EventSystem>();
             if (es == null)
             {
                 var esGO = new GameObject("EventSystem", typeof(UnityEngine.EventSystems.EventSystem), typeof(InputSystemUIInputModule));
             }
             else
             {
-                // Ensure InputSystemUIInputModule
                 var oldModule = es.GetComponent<UnityEngine.EventSystems.StandaloneInputModule>();
-                if (oldModule != null) Object.DestroyImmediate(oldModule);
+                if (oldModule != null) UnityEngine.Object.DestroyImmediate(oldModule);
                 if (es.GetComponent<InputSystemUIInputModule>() == null)
                 {
                     es.gameObject.AddComponent<InputSystemUIInputModule>();
@@ -942,7 +1117,7 @@ namespace DNDBeyond.Editor
             GameObject canvasGO = GameObject.Find("MainCanvas");
             if (canvasGO != null)
             {
-                Object.DestroyImmediate(canvasGO);
+                UnityEngine.Object.DestroyImmediate(canvasGO);
             }
 
             canvasGO = new GameObject("MainCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
@@ -954,11 +1129,9 @@ namespace DNDBeyond.Editor
             scaler.referenceResolution = new Vector2(1920, 1080);
             scaler.matchWidthOrHeight = 0.5f;
 
-            // Central Customizer Manager on Canvas or separate GameObject
             var manager = canvasGO.AddComponent<CharacterCustomizerManager>();
             var evaluator = canvasGO.AddComponent<RuleHarmonyEvaluator>();
 
-            // Load options and rules into manager
             var allOptionGuids = AssetDatabase.FindAssets("t:CharacterOptionSO", new[] { DATA_DIR });
             List<CharacterOptionSO> optionList = new List<CharacterOptionSO>();
             foreach (var guid in allOptionGuids)
@@ -979,16 +1152,11 @@ namespace DNDBeyond.Editor
             }
             evaluator.SetRules(ruleList);
 
-            // Set initial build choices: Tiefling Barbarian HeavyArmor Greataxe (triggers the classic rule quirk!)
-            var tieflingOpt = optionList.Find(o => o.id == "race_tiefling");
-            var barbarianOpt = optionList.Find(o => o.id == "class_barbarian");
-            var heavyOpt = optionList.Find(o => o.id == "armor_heavy") as EquipmentSO;
-            var axeOpt = optionList.Find(o => o.id == "weapon_greataxe") as EquipmentSO;
-
-            manager.CurrentBuild.currentRace = tieflingOpt;
-            manager.CurrentBuild.currentClass = barbarianOpt;
-            manager.CurrentBuild.currentArmor = heavyOpt;
-            manager.CurrentBuild.currentWeapon = axeOpt;
+            // Clean-Slate Startup: Player begins with empty canvas (0/4 Choices Made)
+            manager.CurrentBuild.currentRace = null;
+            manager.CurrentBuild.currentClass = null;
+            manager.CurrentBuild.currentArmor = null;
+            manager.CurrentBuild.currentWeapon = null;
 
             Sprite boxSprite = LoadSprite("spr_box_white");
             Sprite d20Sprite = LoadSprite("spr_d20");
@@ -997,22 +1165,22 @@ namespace DNDBeyond.Editor
             // 1. Header
             CreateHeader(canvasGO.transform, boxSprite);
 
-            // 2. Top-Left: D20 + Sliding Note Panel
+            // 2. Top-Left: D20 + Rule Quirk Card
             CreateTopLeftD20AndNote(canvasGO.transform, boxSprite, d20Sprite, cardSprite);
 
-            // 3. Top-Right: Mini Sheet Chips
-            CreateTopRightMiniSheet(canvasGO.transform, boxSprite);
+            // 3. Bottom-Left: Mini Character Sheet (VerticalLayoutGroup, no overlap)
+            CreateBottomLeftMiniSheet(canvasGO.transform, boxSprite, cardSprite);
 
-            // 4. Center Viewport Drop Zone (Over the Mannequin)
+            // 4. Center Drop Zone
             CreateCenterDropZone(canvasGO.transform, boxSprite);
 
-            // 5. Drawer Item Prefab
-            GameObject drawerItemPrefab = CreateDrawerItemPrefab(cardSprite);
+            // 5. Drawer Item Prefab (horizontal row for 460px menu)
+            GameObject drawerItemPrefab = CreateDrawerItemPrefab(cardSprite, boxSprite);
 
-            // 6. Bottom Category Drawer
-            CreateBottomDrawer(canvasGO.transform, boxSprite, drawerItemPrefab);
+            // 6. Right-Side Thick Menu (Width: 460px) with Two-Level Drill-Down Navigation
+            CreateRightSideMenu(canvasGO.transform, boxSprite, cardSprite, drawerItemPrefab);
 
-            // 7. Export Button & Modal
+            // 7. Export Modal Overlay
             CreateExportModal(canvasGO.transform, boxSprite, cardSprite);
         }
 
@@ -1029,20 +1197,20 @@ namespace DNDBeyond.Editor
 
             var img = header.GetComponent<Image>();
             img.sprite = boxSprite;
-            img.color = new Color(0.09f, 0.11f, 0.15f, 0.95f);
+            img.type = Image.Type.Sliced;
+            img.color = new Color(0.09f, 0.09f, 0.10f, 1f); // D&D Beyond dark banner
 
-            // Title
             GameObject titleGO = new GameObject("TitleText", typeof(RectTransform), typeof(TextMeshProUGUI));
             titleGO.transform.SetParent(header.transform, false);
             var tr = titleGO.GetComponent<RectTransform>();
-            tr.anchorMin = new Vector2(0.5f, 0.5f);
-            tr.anchorMax = new Vector2(0.5f, 0.5f);
-            tr.pivot = new Vector2(0.5f, 0.5f);
-            tr.sizeDelta = new Vector2(800, 45);
+            tr.anchorMin = Vector2.zero;
+            tr.anchorMax = Vector2.one;
+            tr.sizeDelta = Vector2.zero;
 
             var tmp = titleGO.GetComponent<TextMeshProUGUI>();
-            tmp.text = "<b><color=#E03B3B>D&D</color> BEYOND</b>  |  VISUAL CHARACTER CREATOR (GREYBOX PROTOTYPE)";
-            tmp.fontSize = 22;
+            tmp.text = "<b><color=#E03B3B>D&D</color> BEYOND</b>  |  VISUAL CHARACTER BUILDER";
+            tmp.fontSize = 26;
+            tmp.fontStyle = FontStyles.Bold;
             tmp.alignment = TextAlignmentOptions.Center;
             tmp.color = Color.white;
         }
@@ -1056,11 +1224,11 @@ namespace DNDBeyond.Editor
             rect.anchorMax = new Vector2(0f, 1f);
             rect.pivot = new Vector2(0f, 1f);
             rect.anchoredPosition = new Vector2(30, -75);
-            rect.sizeDelta = new Vector2(380, 400);
+            rect.sizeDelta = new Vector2(400, 480);
 
             var harmonyUI = d20Container.AddComponent<D20HarmonyUI>();
 
-            // D20 Button Box
+            // 1. Permanent HUD Box (Cannot Minimize): SYNERGY
             GameObject btnGO = new GameObject("D20Button", typeof(RectTransform), typeof(Image), typeof(Button));
             btnGO.transform.SetParent(d20Container.transform, false);
             var bRect = btnGO.GetComponent<RectTransform>();
@@ -1068,25 +1236,26 @@ namespace DNDBeyond.Editor
             bRect.anchorMax = new Vector2(0f, 1f);
             bRect.pivot = new Vector2(0f, 1f);
             bRect.anchoredPosition = Vector2.zero;
-            bRect.sizeDelta = new Vector2(260, 75);
+            bRect.sizeDelta = new Vector2(340, 80);
 
             var btnImg = btnGO.GetComponent<Image>();
-            btnImg.sprite = boxSprite;
-            btnImg.color = new Color(0.14f, 0.16f, 0.22f, 0.95f);
+            btnImg.sprite = cardSprite;
+            btnImg.type = Image.Type.Sliced;
+            btnImg.color = Color.white; // Crisp white card
             var btn = btnGO.GetComponent<Button>();
 
-            // D20 Glow Circle
+            // D20 Glow
             GameObject glowGO = new GameObject("D20Glow", typeof(RectTransform), typeof(Image));
             glowGO.transform.SetParent(btnGO.transform, false);
             var gRect = glowGO.GetComponent<RectTransform>();
             gRect.anchorMin = new Vector2(0f, 0.5f);
             gRect.anchorMax = new Vector2(0f, 0.5f);
             gRect.pivot = new Vector2(0.5f, 0.5f);
-            gRect.anchoredPosition = new Vector2(40, 0);
-            gRect.sizeDelta = new Vector2(65, 65);
+            gRect.anchoredPosition = new Vector2(45, 0);
+            gRect.sizeDelta = new Vector2(68, 68);
             var glowImg = glowGO.GetComponent<Image>();
             glowImg.sprite = d20Sprite;
-            glowImg.color = new Color(1f, 0.5f, 0.2f, 0.8f);
+            glowImg.color = new Color(0.20f, 0.65f, 0.30f, 0.85f);
 
             // D20 Icon
             GameObject iconGO = new GameObject("D20Icon", typeof(RectTransform), typeof(Image));
@@ -1095,26 +1264,28 @@ namespace DNDBeyond.Editor
             iRect.anchorMin = new Vector2(0f, 0.5f);
             iRect.anchorMax = new Vector2(0f, 0.5f);
             iRect.pivot = new Vector2(0.5f, 0.5f);
-            iRect.anchoredPosition = new Vector2(40, 0);
-            iRect.sizeDelta = new Vector2(50, 50);
+            iRect.anchoredPosition = new Vector2(45, 0);
+            iRect.sizeDelta = new Vector2(54, 54);
             var iconImg = iconGO.GetComponent<Image>();
             iconImg.sprite = d20Sprite;
 
-            // Status label
+            // Status label (Synergy branding)
             GameObject statusGO = new GameObject("StatusText", typeof(RectTransform), typeof(TextMeshProUGUI));
             statusGO.transform.SetParent(btnGO.transform, false);
             var sRect = statusGO.GetComponent<TextMeshProUGUI>().rectTransform;
             sRect.anchorMin = new Vector2(0f, 0.5f);
             sRect.anchorMax = new Vector2(1f, 0.5f);
             sRect.pivot = new Vector2(0f, 0.5f);
-            sRect.anchoredPosition = new Vector2(80, 0);
-            sRect.sizeDelta = new Vector2(-85, 50);
+            sRect.anchoredPosition = new Vector2(90, 0);
+            sRect.sizeDelta = new Vector2(-95, 60);
             var sTmp = statusGO.GetComponent<TextMeshProUGUI>();
-            sTmp.text = "<b>RULE QUIRK</b>\n<size=12><color=#AAAAAA>Click to Toggle Note</size></color>";
-            sTmp.fontSize = 17;
+            sTmp.text = "<b><color=#181818>SYNERGY</color></b>\n<size=12><color=#2E7D32>Harmonious</color></size>";
+            sTmp.fontSize = 20;
+            sTmp.lineSpacing = 3;
             sTmp.alignment = TextAlignmentOptions.MidlineLeft;
+            sTmp.color = Color.white;
 
-            // Quirk Badge (Exclamation mark icon)
+            // Quirk Badge
             GameObject badgeGO = new GameObject("QuirkBadge", typeof(RectTransform), typeof(Image));
             badgeGO.transform.SetParent(btnGO.transform, false);
             var badgeRect = badgeGO.GetComponent<RectTransform>();
@@ -1122,28 +1293,28 @@ namespace DNDBeyond.Editor
             badgeRect.anchorMax = new Vector2(1f, 1f);
             badgeRect.pivot = new Vector2(1f, 1f);
             badgeRect.anchoredPosition = new Vector2(8, 8);
-            badgeRect.sizeDelta = new Vector2(24, 24);
+            badgeRect.sizeDelta = new Vector2(26, 26);
             var badgeImg = badgeGO.GetComponent<Image>();
             badgeImg.sprite = boxSprite;
             badgeImg.color = new Color(0.95f, 0.25f, 0.2f, 1f);
 
-            // Note Card Panel (Below D20)
+            // 2. Pop-up Insight Card (CAN Minimize / Close): RULE QUIRK
             GameObject noteCard = new GameObject("NoteCardPanel", typeof(RectTransform), typeof(Image), typeof(CanvasGroup));
             noteCard.transform.SetParent(d20Container.transform, false);
             var nRect = noteCard.GetComponent<RectTransform>();
             nRect.anchorMin = new Vector2(0f, 1f);
             nRect.anchorMax = new Vector2(0f, 1f);
             nRect.pivot = new Vector2(0f, 1f);
-            nRect.anchoredPosition = new Vector2(0, -90);
-            nRect.sizeDelta = new Vector2(360, 220);
+            nRect.anchoredPosition = new Vector2(0, -95);
+            nRect.sizeDelta = new Vector2(390, 240);
 
             var nImg = noteCard.GetComponent<Image>();
             nImg.sprite = cardSprite;
             nImg.type = Image.Type.Sliced;
-            nImg.color = new Color(0.12f, 0.14f, 0.18f, 0.98f);
+            nImg.color = Color.white; // Crisp white card
             var cg = noteCard.GetComponent<CanvasGroup>();
 
-            // Note Tag
+            // Rule Quirk Tag (15pt bold red)
             GameObject tagGO = new GameObject("TagText", typeof(RectTransform), typeof(TextMeshProUGUI));
             tagGO.transform.SetParent(noteCard.transform, false);
             var tagRect = tagGO.GetComponent<RectTransform>();
@@ -1151,58 +1322,65 @@ namespace DNDBeyond.Editor
             tagRect.anchorMax = new Vector2(1f, 1f);
             tagRect.pivot = new Vector2(0f, 1f);
             tagRect.anchoredPosition = new Vector2(16, -14);
-            tagRect.sizeDelta = new Vector2(-32, 24);
+            tagRect.sizeDelta = new Vector2(-60, 24);
             var tagTmp = tagGO.GetComponent<TextMeshProUGUI>();
-            tagTmp.text = "[ 5e RULE RESTRICTION ]";
-            tagTmp.fontSize = 13;
-            tagTmp.color = new Color(1f, 0.5f, 0.2f);
+            tagTmp.text = "[ RULE QUIRK ]";
+            tagTmp.fontSize = 15;
             tagTmp.fontStyle = FontStyles.Bold;
+            tagTmp.color = new Color(0.77f, 0.12f, 0.12f); // D&D red
 
-            // Note Title
+            // Note Title (20pt bold charcoal)
             GameObject noteTitleGO = new GameObject("NoteTitle", typeof(RectTransform), typeof(TextMeshProUGUI));
             noteTitleGO.transform.SetParent(noteCard.transform, false);
             var ntRect = noteTitleGO.GetComponent<RectTransform>();
             ntRect.anchorMin = new Vector2(0f, 1f);
             ntRect.anchorMax = new Vector2(1f, 1f);
             ntRect.pivot = new Vector2(0f, 1f);
-            ntRect.anchoredPosition = new Vector2(16, -38);
-            ntRect.sizeDelta = new Vector2(-32, 28);
+            ntRect.anchoredPosition = new Vector2(16, -40);
+            ntRect.sizeDelta = new Vector2(-60, 30);
             var ntTmp = noteTitleGO.GetComponent<TextMeshProUGUI>();
-            ntTmp.text = "Barbarians & Heavy Armor";
-            ntTmp.fontSize = 17;
+            ntTmp.text = "Rule Quirk: Barbarians & Heavy Armor";
+            ntTmp.fontSize = 19;
             ntTmp.fontStyle = FontStyles.Bold;
-            ntTmp.color = Color.white;
+            ntTmp.color = new Color(0.14f, 0.15f, 0.17f, 1f); // #242527
 
-            // Note Body
+            // Note Body (16pt soft charcoal)
             GameObject noteBodyGO = new GameObject("NoteBody", typeof(RectTransform), typeof(TextMeshProUGUI));
             noteBodyGO.transform.SetParent(noteCard.transform, false);
             var nbRect = noteBodyGO.GetComponent<RectTransform>();
             nbRect.anchorMin = new Vector2(0f, 0f);
             nbRect.anchorMax = new Vector2(1f, 1f);
             nbRect.pivot = new Vector2(0.5f, 0.5f);
-            nbRect.anchoredPosition = new Vector2(0, -25);
-            nbRect.sizeDelta = new Vector2(-32, -80);
+            nbRect.anchoredPosition = new Vector2(0, -28);
+            nbRect.sizeDelta = new Vector2(-32, -85);
             var nbTmp = noteBodyGO.GetComponent<TextMeshProUGUI>();
-            nbTmp.text = "Barbarians are free to wear heavy armor, but their signature feature — Rage — does not grant damage resistance while wearing it!";
-            nbTmp.fontSize = 14;
-            nbTmp.color = new Color(0.85f, 0.88f, 0.92f);
-            // word wrapping enabled by default
+            nbTmp.text = "Barbarians can equip heavy armor, but their signature feature — Rage — does not grant damage resistance while wearing it!";
+            nbTmp.fontSize = 16;
+            nbTmp.lineSpacing = 5;
+            nbTmp.color = new Color(0.35f, 0.38f, 0.42f, 1f); // #555555
 
-            // Close Button
+            // Dismiss [X] Button
             GameObject closeBtnGO = new GameObject("CloseButton", typeof(RectTransform), typeof(Image), typeof(Button));
             closeBtnGO.transform.SetParent(noteCard.transform, false);
             var cRect = closeBtnGO.GetComponent<RectTransform>();
             cRect.anchorMin = new Vector2(1f, 1f);
             cRect.anchorMax = new Vector2(1f, 1f);
             cRect.pivot = new Vector2(1f, 1f);
-            cRect.anchoredPosition = new Vector2(-10, -10);
-            cRect.sizeDelta = new Vector2(24, 24);
+            cRect.anchoredPosition = new Vector2(-12, -12);
+            cRect.sizeDelta = new Vector2(30, 30);
             var cImg = closeBtnGO.GetComponent<Image>();
             cImg.sprite = boxSprite;
-            cImg.color = new Color(0.3f, 0.35f, 0.4f, 0.8f);
+            cImg.color = new Color(0.92f, 0.92f, 0.94f, 1f); // Soft grey pill
             var cBtn = closeBtnGO.GetComponent<Button>();
 
-            // Wire D20HarmonyUI serialized fields via reflection or helper
+            GameObject closeTxt = new GameObject("X", typeof(RectTransform), typeof(TextMeshProUGUI));
+            closeTxt.transform.SetParent(closeBtnGO.transform, false);
+            var ct = closeTxt.GetComponent<TextMeshProUGUI>();
+            ct.text = "✕";
+            ct.fontSize = 16;
+            ct.alignment = TextAlignmentOptions.Center;
+            ct.color = new Color(0.25f, 0.25f, 0.25f, 1f);
+
             SetPrivateField(harmonyUI, "d20Button", btn);
             SetPrivateField(harmonyUI, "d20GlowImage", glowImg);
             SetPrivateField(harmonyUI, "d20IconImage", iconImg);
@@ -1216,83 +1394,113 @@ namespace DNDBeyond.Editor
             SetPrivateField(harmonyUI, "noteCloseButton", cBtn);
         }
 
-        private static void CreateTopRightMiniSheet(Transform canvasTr, Sprite boxSprite)
+        private static void CreateBottomLeftMiniSheet(Transform canvasTr, Sprite boxSprite, Sprite cardSprite)
         {
-            GameObject sheetPanel = new GameObject("MiniSheetPanel", typeof(RectTransform), typeof(Image));
+            // Bottom-Left corner panel
+            GameObject sheetPanel = new GameObject("MiniSheetPanel", typeof(RectTransform), typeof(Image), typeof(VerticalLayoutGroup));
             sheetPanel.transform.SetParent(canvasTr, false);
             var rect = sheetPanel.GetComponent<RectTransform>();
-            rect.anchorMin = new Vector2(1f, 1f);
-            rect.anchorMax = new Vector2(1f, 1f);
-            rect.pivot = new Vector2(1f, 1f);
-            rect.anchoredPosition = new Vector2(-30, -75);
-            rect.sizeDelta = new Vector2(480, 130);
+            rect.anchorMin = new Vector2(0f, 0f);
+            rect.anchorMax = new Vector2(0f, 0f);
+            rect.pivot = new Vector2(0f, 0f);
+            rect.anchoredPosition = new Vector2(30, 30);
+            rect.sizeDelta = new Vector2(390, 345);
 
             var img = sheetPanel.GetComponent<Image>();
-            img.sprite = boxSprite;
-            img.color = new Color(0.11f, 0.13f, 0.18f, 0.95f);
+            img.sprite = cardSprite;
+            img.type = Image.Type.Sliced;
+            img.color = Color.white; // Crisp white card
+
+            var vlg = sheetPanel.GetComponent<VerticalLayoutGroup>();
+            vlg.spacing = 8;
+            vlg.padding = new RectOffset(14, 14, 14, 14);
+            vlg.childControlWidth = true;
+            vlg.childControlHeight = false;
+            vlg.childForceExpandWidth = true;
+            vlg.childForceExpandHeight = false;
 
             var miniUI = sheetPanel.AddComponent<MiniSheetUI>();
 
-            // Header label
+            // Title row
             GameObject headerGO = new GameObject("HeaderLabel", typeof(RectTransform), typeof(TextMeshProUGUI));
             headerGO.transform.SetParent(sheetPanel.transform, false);
             var hRect = headerGO.GetComponent<RectTransform>();
-            hRect.anchorMin = new Vector2(0f, 1f);
-            hRect.anchorMax = new Vector2(1f, 1f);
-            hRect.pivot = new Vector2(0f, 1f);
-            hRect.anchoredPosition = new Vector2(14, -10);
-            hRect.sizeDelta = new Vector2(-28, 24);
+            hRect.sizeDelta = new Vector2(0, 26);
             var hTmp = headerGO.GetComponent<TextMeshProUGUI>();
             hTmp.text = "<b>MINI CHARACTER SHEET</b>";
-            hTmp.fontSize = 13;
-            hTmp.color = new Color(0.7f, 0.75f, 0.85f);
+            hTmp.fontSize = 18;
+            hTmp.color = new Color(0.14f, 0.15f, 0.17f, 1f); // #242527
 
-            // Total AC banner
-            GameObject acGO = new GameObject("TotalAC", typeof(RectTransform), typeof(TextMeshProUGUI));
+            // Clean vertically-stacked rows (Clean-slate startup: 0/4 choices made)
+            var speciesChip = CreateSheetRow(sheetPanel.transform, boxSprite, "[ ] Species: (None chosen)");
+            var classChip = CreateSheetRow(sheetPanel.transform, boxSprite, "[ ] Class: (None chosen)");
+            var armorChip = CreateSheetRow(sheetPanel.transform, boxSprite, "[ ] Armor: (None chosen)");
+            var weaponChip = CreateSheetRow(sheetPanel.transform, boxSprite, "[ ] Weapon: (None chosen)");
+
+            // Armor Class row (Base AC 10 badge)
+            GameObject acGO = new GameObject("TotalACRow", typeof(RectTransform), typeof(Image));
             acGO.transform.SetParent(sheetPanel.transform, false);
             var acRect = acGO.GetComponent<RectTransform>();
-            acRect.anchorMin = new Vector2(1f, 1f);
-            acRect.anchorMax = new Vector2(1f, 1f);
-            acRect.pivot = new Vector2(1f, 1f);
-            acRect.anchoredPosition = new Vector2(-14, -10);
-            acRect.sizeDelta = new Vector2(200, 24);
-            var acTmp = acGO.GetComponent<TextMeshProUGUI>();
-            acTmp.text = "ARMOR CLASS: 18";
-            acTmp.fontSize = 14;
-            acTmp.fontStyle = FontStyles.Bold;
-            acTmp.alignment = TextAlignmentOptions.TopRight;
-            acTmp.color = new Color(0.95f, 0.8f, 0.3f);
+            acRect.sizeDelta = new Vector2(0, 42);
+            var acImg = acGO.GetComponent<Image>();
+            acImg.sprite = boxSprite;
+            acImg.type = Image.Type.Sliced;
+            acImg.color = new Color(0.98f, 0.97f, 0.92f, 1f); // Soft light gold tint
 
-            // 4 Chip Containers
-            var speciesChip = CreateChip(sheetPanel.transform, boxSprite, new Vector2(14, -40), new Vector2(215, 36), "[ Species: Tiefling ]");
-            var classChip = CreateChip(sheetPanel.transform, boxSprite, new Vector2(245, -40), new Vector2(215, 36), "[ Class: Barbarian ]");
-            var armorChip = CreateChip(sheetPanel.transform, boxSprite, new Vector2(14, -82), new Vector2(215, 36), "[ Armor: Heavy (AC 18) ]");
-            var weaponChip = CreateChip(sheetPanel.transform, boxSprite, new Vector2(245, -82), new Vector2(215, 36), "[ Weapon: Greataxe ]");
+            GameObject acTextGO = new GameObject("Text", typeof(RectTransform), typeof(TextMeshProUGUI));
+            acTextGO.transform.SetParent(acGO.transform, false);
+            var atRect = acTextGO.GetComponent<RectTransform>();
+            atRect.anchorMin = Vector2.zero;
+            atRect.anchorMax = Vector2.one;
+            atRect.sizeDelta = Vector2.zero;
+            var acTmp = acTextGO.GetComponent<TextMeshProUGUI>();
+            acTmp.text = "<color=#966A00><b>ARMOR CLASS: 10 (Base)</b></color>";
+            acTmp.fontSize = 18;
+            acTmp.alignment = TextAlignmentOptions.Center;
+
+            // 4-step checklist milestone row: Adventure Ready!
+            GameObject readyGO = new GameObject("AdventureReadyRow", typeof(RectTransform), typeof(Image));
+            readyGO.transform.SetParent(sheetPanel.transform, false);
+            var readyRect = readyGO.GetComponent<RectTransform>();
+            readyRect.sizeDelta = new Vector2(0, 40);
+            var readyImg = readyGO.GetComponent<Image>();
+            readyImg.sprite = boxSprite;
+            readyImg.type = Image.Type.Sliced;
+            readyImg.color = new Color(0.95f, 0.95f, 0.96f, 1f); // Soft grey when incomplete
+
+            GameObject readyTextGO = new GameObject("Text", typeof(RectTransform), typeof(TextMeshProUGUI));
+            readyTextGO.transform.SetParent(readyGO.transform, false);
+            var rtRect = readyTextGO.GetComponent<RectTransform>();
+            rtRect.anchorMin = Vector2.zero;
+            rtRect.anchorMax = Vector2.one;
+            rtRect.sizeDelta = Vector2.zero;
+            var readyTmp = readyTextGO.GetComponent<TextMeshProUGUI>();
+            readyTmp.text = "<color=#888888>⭐ Adventure Ready (0/4 Choices)</color>";
+            readyTmp.fontSize = 16;
+            readyTmp.alignment = TextAlignmentOptions.Center;
 
             SetPrivateField(miniUI, "speciesChipText", speciesChip);
             SetPrivateField(miniUI, "classChipText", classChip);
             SetPrivateField(miniUI, "armorChipText", armorChip);
             SetPrivateField(miniUI, "weaponChipText", weaponChip);
             SetPrivateField(miniUI, "totalAcText", acTmp);
+            SetPrivateField(miniUI, "adventureReadyText", readyTmp);
         }
 
-        private static TextMeshProUGUI CreateChip(Transform parent, Sprite boxSprite, Vector2 pos, Vector2 size, string text)
+        private static TextMeshProUGUI CreateSheetRow(Transform parent, Sprite boxSprite, string text)
         {
-            GameObject chipGO = new GameObject("Chip", typeof(RectTransform), typeof(Image));
-            chipGO.transform.SetParent(parent, false);
-            var rect = chipGO.GetComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0f, 1f);
-            rect.anchorMax = new Vector2(0f, 1f);
-            rect.pivot = new Vector2(0f, 1f);
-            rect.anchoredPosition = pos;
-            rect.sizeDelta = size;
+            GameObject rowGO = new GameObject("Row", typeof(RectTransform), typeof(Image));
+            rowGO.transform.SetParent(parent, false);
+            var rect = rowGO.GetComponent<RectTransform>();
+            rect.sizeDelta = new Vector2(0, 38);
 
-            var img = chipGO.GetComponent<Image>();
+            var img = rowGO.GetComponent<Image>();
             img.sprite = boxSprite;
-            img.color = new Color(0.18f, 0.22f, 0.30f, 0.95f);
+            img.type = Image.Type.Sliced;
+            img.color = new Color(0.96f, 0.96f, 0.97f, 1f); // Soft neutral chip
 
             GameObject textGO = new GameObject("Text", typeof(RectTransform), typeof(TextMeshProUGUI));
-            textGO.transform.SetParent(chipGO.transform, false);
+            textGO.transform.SetParent(rowGO.transform, false);
             var tRect = textGO.GetComponent<RectTransform>();
             tRect.anchorMin = Vector2.zero;
             tRect.anchorMax = Vector2.one;
@@ -1300,9 +1508,10 @@ namespace DNDBeyond.Editor
 
             var tmp = textGO.GetComponent<TextMeshProUGUI>();
             tmp.text = text;
-            tmp.fontSize = 13;
+            tmp.fontSize = 15;
+            tmp.fontStyle = FontStyles.Bold;
             tmp.alignment = TextAlignmentOptions.Center;
-            tmp.color = Color.white;
+            tmp.color = new Color(0.18f, 0.20f, 0.24f, 1f); // Dark charcoal text
             return tmp;
         }
 
@@ -1314,37 +1523,41 @@ namespace DNDBeyond.Editor
             rect.anchorMin = new Vector2(0.5f, 0.5f);
             rect.anchorMax = new Vector2(0.5f, 0.5f);
             rect.pivot = new Vector2(0.5f, 0.5f);
-            rect.anchoredPosition = new Vector2(0, 40);
-            rect.sizeDelta = new Vector2(360, 480);
+            // Mannequin stands at X = -1.2 world units (~ -130px canvas)
+            rect.anchoredPosition = new Vector2(-130, -40);
+            rect.sizeDelta = new Vector2(460, 800);
 
             var dropZone = dropZoneGO.GetComponent<CharacterDropZone>();
             var img = dropZoneGO.GetComponent<Image>();
             img.sprite = boxSprite;
-            img.color = new Color(1f, 1f, 1f, 0.04f); // Subtle drop region
+            img.type = Image.Type.Sliced;
+            img.color = new Color(1f, 1f, 1f, 0.03f);
 
             SetPrivateField(dropZone, "highlightBorder", img);
         }
 
-        private static GameObject CreateDrawerItemPrefab(Sprite cardSprite)
+        private static GameObject CreateDrawerItemPrefab(Sprite cardSprite, Sprite boxSprite)
         {
             string path = $"{PREFABS_DIR}/DrawerItemView.prefab";
-            var existing = AssetDatabase.LoadAssetAtPath<GameObject>(path);
-            if (existing != null) return existing;
+            if (File.Exists(path))
+            {
+                AssetDatabase.DeleteAsset(path);
+            }
 
             GameObject go = new GameObject("DrawerItemView", typeof(RectTransform), typeof(Image), typeof(Button), typeof(ItemDragHandler), typeof(DrawerItemView));
             var rect = go.GetComponent<RectTransform>();
-            rect.sizeDelta = new Vector2(170, 190);
+            rect.sizeDelta = new Vector2(468, 86);
 
             var img = go.GetComponent<Image>();
             img.sprite = cardSprite;
             img.type = Image.Type.Sliced;
-            img.color = new Color(0.13f, 0.16f, 0.22f, 1f);
+            img.color = Color.white; // Crisp white rounded card
 
             var btn = go.GetComponent<Button>();
             var dragHandler = go.GetComponent<ItemDragHandler>();
             var view = go.GetComponent<DrawerItemView>();
 
-            // Selection Border
+            // Selection Border (D&D Beyond Blue outline)
             GameObject borderGO = new GameObject("SelectionBorder", typeof(RectTransform), typeof(Image));
             borderGO.transform.SetParent(go.transform, false);
             var bRect = borderGO.GetComponent<RectTransform>();
@@ -1354,176 +1567,367 @@ namespace DNDBeyond.Editor
             var bImg = borderGO.GetComponent<Image>();
             bImg.sprite = cardSprite;
             bImg.type = Image.Type.Sliced;
-            bImg.color = new Color(0.95f, 0.75f, 0.2f, 1f);
+            bImg.color = new Color(0.15f, 0.46f, 0.70f, 1f);
             borderGO.transform.SetAsFirstSibling();
 
-            // Icon
+            // Icon Box (Badge frame with class theme background)
+            GameObject iconBox = new GameObject("IconBox", typeof(RectTransform), typeof(Image));
+            iconBox.transform.SetParent(go.transform, false);
+            var ibRect = iconBox.GetComponent<RectTransform>();
+            ibRect.anchorMin = new Vector2(0f, 0.5f);
+            ibRect.anchorMax = new Vector2(0f, 0.5f);
+            ibRect.pivot = new Vector2(0.5f, 0.5f);
+            ibRect.anchoredPosition = new Vector2(42, 0);
+            ibRect.sizeDelta = new Vector2(58, 58);
+            var ibImg = iconBox.GetComponent<Image>();
+            ibImg.sprite = boxSprite;
+            ibImg.type = Image.Type.Sliced;
+            ibImg.color = Color.white; // Color set by DrawerItemView to match class theme
+
             GameObject iconGO = new GameObject("Icon", typeof(RectTransform), typeof(Image));
-            iconGO.transform.SetParent(go.transform, false);
+            iconGO.transform.SetParent(iconBox.transform, false);
             var iRect = iconGO.GetComponent<RectTransform>();
-            iRect.anchorMin = new Vector2(0.5f, 1f);
-            iRect.anchorMax = new Vector2(0.5f, 1f);
-            iRect.pivot = new Vector2(0.5f, 1f);
-            iRect.anchoredPosition = new Vector2(0, -12);
-            iRect.sizeDelta = new Vector2(90, 90);
+            iRect.anchorMin = Vector2.zero;
+            iRect.anchorMax = Vector2.one;
+            iRect.sizeDelta = new Vector2(-12, -12);
             var iconImg = iconGO.GetComponent<Image>();
             iconImg.preserveAspect = true;
 
-            // Title
+            // Title (Bold uppercase, dark charcoal #242527)
             GameObject titleGO = new GameObject("Title", typeof(RectTransform), typeof(TextMeshProUGUI));
             titleGO.transform.SetParent(go.transform, false);
             var tRect = titleGO.GetComponent<RectTransform>();
-            tRect.anchorMin = new Vector2(0f, 0f);
-            tRect.anchorMax = new Vector2(1f, 0f);
-            tRect.pivot = new Vector2(0.5f, 0f);
-            tRect.anchoredPosition = new Vector2(0, 48);
-            tRect.sizeDelta = new Vector2(-16, 24);
+            tRect.anchorMin = new Vector2(0f, 0.52f);
+            tRect.anchorMax = new Vector2(1f, 1f);
+            tRect.pivot = new Vector2(0f, 1f);
+            tRect.anchoredPosition = new Vector2(82, -8);
+            tRect.sizeDelta = new Vector2(-125, 0);
             var tTmp = titleGO.GetComponent<TextMeshProUGUI>();
-            tTmp.text = "Item Name";
-            tTmp.fontSize = 15;
+            tTmp.text = "ITEM NAME";
+            tTmp.fontSize = 16;
             tTmp.fontStyle = FontStyles.Bold;
-            tTmp.alignment = TextAlignmentOptions.Center;
-            tTmp.color = Color.white;
+            tTmp.alignment = TextAlignmentOptions.TopLeft;
+            tTmp.color = new Color(0.14f, 0.15f, 0.17f, 1f); // #242527
 
-            // Subtitle
+            // Subtitle / 1-Sentence Fantasy Hook (Soft grey #666666)
             GameObject subGO = new GameObject("Subtitle", typeof(RectTransform), typeof(TextMeshProUGUI));
             subGO.transform.SetParent(go.transform, false);
             var sRect = subGO.GetComponent<RectTransform>();
             sRect.anchorMin = new Vector2(0f, 0f);
-            sRect.anchorMax = new Vector2(1f, 0f);
-            sRect.pivot = new Vector2(0.5f, 0f);
-            sRect.anchoredPosition = new Vector2(0, 8);
-            sRect.sizeDelta = new Vector2(-16, 38);
+            sRect.anchorMax = new Vector2(1f, 0.54f);
+            sRect.pivot = new Vector2(0f, 0f);
+            sRect.anchoredPosition = new Vector2(82, 6);
+            sRect.sizeDelta = new Vector2(-125, 0);
             var sTmp = subGO.GetComponent<TextMeshProUGUI>();
             sTmp.text = "Details / Stats";
-            sTmp.fontSize = 11;
-            sTmp.alignment = TextAlignmentOptions.Top;
-            sTmp.color = new Color(0.7f, 0.75f, 0.85f);
-            // word wrapping enabled by default
+            sTmp.fontSize = 12f;
+            sTmp.textWrappingMode = TextWrappingModes.Normal;
+            sTmp.lineSpacing = -2f;
+            sTmp.alignment = TextAlignmentOptions.TopLeft;
+            sTmp.color = new Color(0.40f, 0.40f, 0.40f, 1f); // #666666
+
+            // Right-Arrow Chevron > (Subtle grey-blue #8091A5)
+            GameObject chevronGO = new GameObject("Chevron", typeof(RectTransform), typeof(TextMeshProUGUI));
+            chevronGO.transform.SetParent(go.transform, false);
+            var chRect = chevronGO.GetComponent<RectTransform>();
+            chRect.anchorMin = new Vector2(1f, 0.5f);
+            chRect.anchorMax = new Vector2(1f, 0.5f);
+            chRect.pivot = new Vector2(1f, 0.5f);
+            chRect.anchoredPosition = new Vector2(-16, 0);
+            chRect.sizeDelta = new Vector2(24, 24);
+            var chTmp = chevronGO.GetComponent<TextMeshProUGUI>();
+            chTmp.text = ">";
+            chTmp.fontSize = 20;
+            chTmp.fontStyle = FontStyles.Bold;
+            chTmp.alignment = TextAlignmentOptions.Center;
+            chTmp.color = new Color(0.50f, 0.57f, 0.65f, 1f);
 
             SetPrivateField(dragHandler, "cardTransform", rect);
             SetPrivateField(dragHandler, "iconImage", iconImg);
 
             SetPrivateField(view, "iconImage", iconImg);
+            SetPrivateField(view, "badgeBackgroundImage", ibImg);
             SetPrivateField(view, "titleText", tTmp);
             SetPrivateField(view, "subtitleText", sTmp);
+            SetPrivateField(view, "chevronText", chTmp);
             SetPrivateField(view, "selectionBorder", bImg);
             SetPrivateField(view, "dragHandler", dragHandler);
             SetPrivateField(view, "clickButton", btn);
 
             GameObject prefab = PrefabUtility.SaveAsPrefabAsset(go, path);
-            Object.DestroyImmediate(go);
+            UnityEngine.Object.DestroyImmediate(go);
             return prefab;
         }
 
-        private static void CreateBottomDrawer(Transform canvasTr, Sprite boxSprite, GameObject drawerItemPrefab)
+        private static void CreateRightSideMenu(Transform canvasTr, Sprite boxSprite, Sprite cardSprite, GameObject drawerItemPrefab)
         {
-            GameObject drawerGO = new GameObject("CategoryDrawerPanel", typeof(RectTransform), typeof(Image), typeof(CategoryDrawerUI));
-            drawerGO.transform.SetParent(canvasTr, false);
-            var rect = drawerGO.GetComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0f, 0f);
-            rect.anchorMax = new Vector2(1f, 0f);
-            rect.pivot = new Vector2(0.5f, 0f);
-            rect.anchoredPosition = Vector2.zero;
-            rect.sizeDelta = new Vector2(0, 270);
+            // Thick Category Menu Column (Width: 510px — 10% wider for breathing room!)
+            GameObject rightColumn = new GameObject("RightSidePanel", typeof(RectTransform), typeof(Image), typeof(CategoryDrawerUI));
+            rightColumn.transform.SetParent(canvasTr, false);
+            var rcRect = rightColumn.GetComponent<RectTransform>();
+            rcRect.anchorMin = new Vector2(1f, 0f);
+            rcRect.anchorMax = new Vector2(1f, 1f);
+            rcRect.pivot = new Vector2(1f, 0.5f);
+            rcRect.anchoredPosition = new Vector2(-15, 0);
+            rcRect.sizeDelta = new Vector2(510, 0);
 
-            var img = drawerGO.GetComponent<Image>();
-            img.sprite = boxSprite;
-            img.color = new Color(0.09f, 0.11f, 0.15f, 0.98f);
+            var rcImg = rightColumn.GetComponent<Image>();
+            rcImg.sprite = boxSprite;
+            rcImg.type = Image.Type.Sliced;
+            rcImg.color = new Color(0.97f, 0.97f, 0.96f, 0.98f); // D&D Beyond parchment
 
-            var drawerUI = drawerGO.GetComponent<CategoryDrawerUI>();
+            var drawerUI = rightColumn.GetComponent<CategoryDrawerUI>();
 
-            // Category Tab Buttons Container
-            GameObject tabsGO = new GameObject("TabsContainer", typeof(RectTransform), typeof(HorizontalLayoutGroup));
-            tabsGO.transform.SetParent(drawerGO.transform, false);
-            var tRect = tabsGO.GetComponent<RectTransform>();
-            tRect.anchorMin = new Vector2(0f, 1f);
-            tRect.anchorMax = new Vector2(0f, 1f);
-            tRect.pivot = new Vector2(0f, 1f);
-            tRect.anchoredPosition = new Vector2(30, -10);
-            tRect.sizeDelta = new Vector2(800, 42);
+            // -------------------------------------------------------------
+            // LEVEL 1: Main Categories View
+            // -------------------------------------------------------------
+            GameObject mainCategoriesPanel = new GameObject("MainCategoriesView", typeof(RectTransform));
+            mainCategoriesPanel.transform.SetParent(rightColumn.transform, false);
+            var mcRect = mainCategoriesPanel.GetComponent<RectTransform>();
+            mcRect.anchorMin = new Vector2(0f, 0f);
+            mcRect.anchorMax = new Vector2(1f, 1f);
+            mcRect.offsetMin = new Vector2(16, 75);
+            mcRect.offsetMax = new Vector2(-16, -70);
 
-            var hlg = tabsGO.GetComponent<HorizontalLayoutGroup>();
-            hlg.spacing = 10;
-            hlg.childControlWidth = false;
-            hlg.childControlHeight = true;
-            hlg.childForceExpandWidth = false;
-            hlg.childForceExpandHeight = true;
+            // Title
+            GameObject titleGO = new GameObject("MainTitle", typeof(RectTransform), typeof(TextMeshProUGUI));
+            titleGO.transform.SetParent(mainCategoriesPanel.transform, false);
+            var mtRect = titleGO.GetComponent<RectTransform>();
+            mtRect.anchorMin = new Vector2(0f, 1f);
+            mtRect.anchorMax = new Vector2(1f, 1f);
+            mtRect.pivot = new Vector2(0.5f, 1f);
+            mtRect.anchoredPosition = new Vector2(0, 0);
+            mtRect.sizeDelta = new Vector2(0, 50);
+            var mtTmp = titleGO.GetComponent<TextMeshProUGUI>();
+            mtTmp.text = "<b><color=#181818>CUSTOMIZE CHARACTER</color></b>\n<size=14><color=#666666>Select a category to customize:</color></size>";
+            mtTmp.fontSize = 20;
+            mtTmp.alignment = TextAlignmentOptions.TopLeft;
 
-            var raceBtn = CreateTabButton(tabsGO.transform, boxSprite, "1. Species / Race");
-            var classBtn = CreateTabButton(tabsGO.transform, boxSprite, "2. Class");
-            var armorBtn = CreateTabButton(tabsGO.transform, boxSprite, "3. Armor & Attire");
-            var weaponBtn = CreateTabButton(tabsGO.transform, boxSprite, "4. Weapons");
+            // Container for 4 chunky buttons
+            GameObject buttonsContainer = new GameObject("ButtonsContainer", typeof(RectTransform), typeof(VerticalLayoutGroup));
+            buttonsContainer.transform.SetParent(mainCategoriesPanel.transform, false);
+            var bcRect = buttonsContainer.GetComponent<RectTransform>();
+            bcRect.anchorMin = new Vector2(0f, 0f);
+            bcRect.anchorMax = new Vector2(1f, 1f);
+            bcRect.offsetMin = new Vector2(0, 0);
+            bcRect.offsetMax = new Vector2(0, -60);
 
-            // Items Container (Horizontal scroll/layout)
-            GameObject itemsContainerGO = new GameObject("ItemsContainer", typeof(RectTransform), typeof(HorizontalLayoutGroup));
-            itemsContainerGO.transform.SetParent(drawerGO.transform, false);
-            var icRect = itemsContainerGO.GetComponent<RectTransform>();
-            icRect.anchorMin = new Vector2(0f, 0f);
-            icRect.anchorMax = new Vector2(1f, 1f);
-            icRect.anchoredPosition = new Vector2(30, -30);
-            icRect.sizeDelta = new Vector2(-420, -70);
+            var bvlg = buttonsContainer.GetComponent<VerticalLayoutGroup>();
+            bvlg.spacing = 14;
+            bvlg.childControlWidth = true;
+            bvlg.childControlHeight = false;
+            bvlg.childForceExpandWidth = true;
+            bvlg.childForceExpandHeight = false;
 
-            var ihlg = itemsContainerGO.GetComponent<HorizontalLayoutGroup>();
-            ihlg.spacing = 16;
-            ihlg.childControlWidth = false;
-            ihlg.childControlHeight = false;
-            ihlg.childForceExpandWidth = false;
-            ihlg.childForceExpandHeight = false;
+            var (raceBtn, raceLabel) = CreateCategoryButton(buttonsContainer.transform, boxSprite, cardSprite, "1. Species / Race", "Current: (None chosen)");
+            var (classBtn, classLabel) = CreateCategoryButton(buttonsContainer.transform, boxSprite, cardSprite, "2. Class", "Current: (None chosen)");
+            var (armorBtn, armorLabel) = CreateCategoryButton(buttonsContainer.transform, boxSprite, cardSprite, "3. Armor & Attire", "Current: (None chosen)");
+            var (weaponBtn, weaponLabel) = CreateCategoryButton(buttonsContainer.transform, boxSprite, cardSprite, "4. Weapons", "Current: (None chosen)");
 
-            SetPrivateField(drawerUI, "raceTabButton", raceBtn);
-            SetPrivateField(drawerUI, "classTabButton", classBtn);
-            SetPrivateField(drawerUI, "armorTabButton", armorBtn);
-            SetPrivateField(drawerUI, "weaponTabButton", weaponBtn);
-            SetPrivateField(drawerUI, "itemsContainer", itemsContainerGO.transform);
-            SetPrivateField(drawerUI, "drawerItemPrefab", drawerItemPrefab);
+            // -------------------------------------------------------------
+            // LEVEL 2: Subcategory View (Drill-Down)
+            // -------------------------------------------------------------
+            GameObject subcategoryPanel = new GameObject("SubcategoryView", typeof(RectTransform));
+            subcategoryPanel.transform.SetParent(rightColumn.transform, false);
+            var scRect = subcategoryPanel.GetComponent<RectTransform>();
+            scRect.anchorMin = new Vector2(0f, 0f);
+            scRect.anchorMax = new Vector2(1f, 1f);
+            scRect.offsetMin = new Vector2(16, 75);
+            scRect.offsetMax = new Vector2(-16, -70);
+
+            // Top Bar: Back button + Title
+            GameObject topBar = new GameObject("TopBar", typeof(RectTransform));
+            topBar.transform.SetParent(subcategoryPanel.transform, false);
+            var tbRect = topBar.GetComponent<RectTransform>();
+            tbRect.anchorMin = new Vector2(0f, 1f);
+            tbRect.anchorMax = new Vector2(1f, 1f);
+            tbRect.pivot = new Vector2(0.5f, 1f);
+            tbRect.anchoredPosition = Vector2.zero;
+            tbRect.sizeDelta = new Vector2(0, 52);
+
+            // [< Back to Categories] Button
+            GameObject backBtnGO = new GameObject("BackButton", typeof(RectTransform), typeof(Image), typeof(Button));
+            backBtnGO.transform.SetParent(topBar.transform, false);
+            var bbRect = backBtnGO.GetComponent<RectTransform>();
+            bbRect.anchorMin = new Vector2(0f, 0.5f);
+            bbRect.anchorMax = new Vector2(0f, 0.5f);
+            bbRect.pivot = new Vector2(0f, 0.5f);
+            bbRect.anchoredPosition = Vector2.zero;
+            bbRect.sizeDelta = new Vector2(195, 42);
+
+            var bbImg = backBtnGO.GetComponent<Image>();
+            bbImg.sprite = boxSprite;
+            bbImg.type = Image.Type.Sliced;
+            bbImg.color = Color.white; // Crisp white pill
+            var backBtn = backBtnGO.GetComponent<Button>();
+
+            GameObject bbText = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
+            bbText.transform.SetParent(backBtnGO.transform, false);
+            var bbtRect = bbText.GetComponent<RectTransform>();
+            bbtRect.anchorMin = Vector2.zero;
+            bbtRect.anchorMax = Vector2.one;
+            bbtRect.sizeDelta = Vector2.zero;
+            var bbtTmp = bbText.GetComponent<TextMeshProUGUI>();
+            bbtTmp.text = "<b>< Back to Categories</b>";
+            bbtTmp.fontSize = 14;
+            bbtTmp.alignment = TextAlignmentOptions.Center;
+            bbtTmp.color = new Color(0.14f, 0.15f, 0.17f, 1f); // #242527
+
+            // Subcategory Title
+            GameObject subTitleGO = new GameObject("SubcategoryTitle", typeof(RectTransform), typeof(TextMeshProUGUI));
+            subTitleGO.transform.SetParent(topBar.transform, false);
+            var stRect = subTitleGO.GetComponent<RectTransform>();
+            stRect.anchorMin = new Vector2(0f, 0.5f);
+            stRect.anchorMax = new Vector2(1f, 0.5f);
+            stRect.pivot = new Vector2(0f, 0.5f);
+            stRect.anchoredPosition = new Vector2(208, 0);
+            stRect.sizeDelta = new Vector2(-208, 40);
+            var stTmp = subTitleGO.GetComponent<TextMeshProUGUI>();
+            stTmp.text = "<b>SELECT CLASS</b>";
+            stTmp.fontSize = 17;
+            stTmp.fontStyle = FontStyles.Bold;
+            stTmp.alignment = TextAlignmentOptions.MidlineLeft;
+            stTmp.color = new Color(0.14f, 0.15f, 0.17f, 1f); // #242527
+
+            // Scroll View for subcategory items
+            GameObject scrollViewGO = new GameObject("ItemsScrollView", typeof(RectTransform), typeof(ScrollRect), typeof(Image));
+            scrollViewGO.transform.SetParent(subcategoryPanel.transform, false);
+            var svRect = scrollViewGO.GetComponent<RectTransform>();
+            svRect.anchorMin = new Vector2(0f, 0f);
+            svRect.anchorMax = new Vector2(1f, 1f);
+            svRect.offsetMin = new Vector2(0, 0);
+            svRect.offsetMax = new Vector2(0, -56);
+
+            var svImg = scrollViewGO.GetComponent<Image>();
+            svImg.sprite = boxSprite;
+            svImg.type = Image.Type.Sliced;
+            svImg.color = new Color(0.94f, 0.94f, 0.93f, 0.5f);
+
+            var scrollRect = scrollViewGO.GetComponent<ScrollRect>();
+            scrollRect.horizontal = false;
+            scrollRect.vertical = true;
+
+            GameObject viewportGO = new GameObject("Viewport", typeof(RectTransform), typeof(RectMask2D));
+            viewportGO.transform.SetParent(scrollViewGO.transform, false);
+            var vpRect = viewportGO.GetComponent<RectTransform>();
+            vpRect.anchorMin = Vector2.zero;
+            vpRect.anchorMax = Vector2.one;
+            vpRect.sizeDelta = Vector2.zero;
+
+            GameObject contentGO = new GameObject("Content", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
+            contentGO.transform.SetParent(viewportGO.transform, false);
+            var cRect = contentGO.GetComponent<RectTransform>();
+            cRect.anchorMin = new Vector2(0f, 1f);
+            cRect.anchorMax = new Vector2(1f, 1f);
+            cRect.pivot = new Vector2(0.5f, 1f);
+            cRect.sizeDelta = new Vector2(0, 0);
+
+            var cvlg = contentGO.GetComponent<VerticalLayoutGroup>();
+            cvlg.spacing = 8;
+            cvlg.padding = new RectOffset(6, 6, 8, 8);
+            cvlg.childControlWidth = true;
+            cvlg.childControlHeight = false;
+            cvlg.childForceExpandWidth = true;
+            cvlg.childForceExpandHeight = false;
+
+            var csf = contentGO.GetComponent<ContentSizeFitter>();
+            csf.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            scrollRect.viewport = vpRect;
+            scrollRect.content = cRect;
+
+            drawerUI.SetupDrillDownReferences(
+                mainCategoriesPanel,
+                raceBtn, raceLabel,
+                classBtn, classLabel,
+                armorBtn, armorLabel,
+                weaponBtn, weaponLabel,
+                subcategoryPanel,
+                backBtn,
+                stTmp,
+                contentGO.transform,
+                drawerItemPrefab);
+
+            // Bottom Export Button
+            CreateExportButton(rightColumn.transform, boxSprite);
         }
 
-        private static Button CreateTabButton(Transform parent, Sprite boxSprite, string title)
+        private static (Button, TextMeshProUGUI) CreateCategoryButton(Transform parent, Sprite boxSprite, Sprite cardSprite, string title, string defaultEquipped)
         {
-            GameObject btnGO = new GameObject("Tab_" + title, typeof(RectTransform), typeof(Image), typeof(Button));
+            GameObject btnGO = new GameObject("Category_" + title, typeof(RectTransform), typeof(Image), typeof(Button));
             btnGO.transform.SetParent(parent, false);
             var rect = btnGO.GetComponent<RectTransform>();
-            rect.sizeDelta = new Vector2(175, 42);
+            rect.sizeDelta = new Vector2(0, 92);
 
             var img = btnGO.GetComponent<Image>();
-            img.sprite = boxSprite;
-            img.color = new Color(0.16f, 0.19f, 0.25f, 1f);
-
+            img.sprite = cardSprite;
+            img.type = Image.Type.Sliced;
+            img.color = Color.white; // Crisp white card
             var btn = btnGO.GetComponent<Button>();
 
-            GameObject textGO = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
-            textGO.transform.SetParent(btnGO.transform, false);
-            var tRect = textGO.GetComponent<RectTransform>();
-            tRect.anchorMin = Vector2.zero;
-            tRect.anchorMax = Vector2.one;
-            tRect.sizeDelta = Vector2.zero;
+            // Title (20pt bold, dark charcoal)
+            GameObject titleGO = new GameObject("Title", typeof(RectTransform), typeof(TextMeshProUGUI));
+            titleGO.transform.SetParent(btnGO.transform, false);
+            var tRect = titleGO.GetComponent<RectTransform>();
+            tRect.anchorMin = new Vector2(0f, 0.5f);
+            tRect.anchorMax = new Vector2(1f, 1f);
+            tRect.pivot = new Vector2(0f, 1f);
+            tRect.anchoredPosition = new Vector2(18, -10);
+            tRect.sizeDelta = new Vector2(-60, 0);
+            var tTmp = titleGO.GetComponent<TextMeshProUGUI>();
+            tTmp.text = $"<b>{title}</b>";
+            tTmp.fontSize = 20;
+            tTmp.alignment = TextAlignmentOptions.TopLeft;
+            tTmp.color = new Color(0.14f, 0.15f, 0.17f, 1f); // #242527
 
-            var tmp = textGO.GetComponent<TextMeshProUGUI>();
-            tmp.text = title;
-            tmp.fontSize = 14;
-            tmp.fontStyle = FontStyles.Bold;
-            tmp.alignment = TextAlignmentOptions.Center;
-            tmp.color = Color.white;
+            // Equipped Label (15pt blue)
+            GameObject eqGO = new GameObject("EquippedLabel", typeof(RectTransform), typeof(TextMeshProUGUI));
+            eqGO.transform.SetParent(btnGO.transform, false);
+            var eqRect = eqGO.GetComponent<RectTransform>();
+            eqRect.anchorMin = new Vector2(0f, 0f);
+            eqRect.anchorMax = new Vector2(1f, 0.5f);
+            eqRect.pivot = new Vector2(0f, 0f);
+            eqRect.anchoredPosition = new Vector2(18, 12);
+            eqRect.sizeDelta = new Vector2(-60, 0);
+            var eqTmp = eqGO.GetComponent<TextMeshProUGUI>();
+            eqTmp.text = defaultEquipped;
+            eqTmp.fontSize = 15;
+            eqTmp.alignment = TextAlignmentOptions.BottomLeft;
+            eqTmp.color = new Color(0.15f, 0.46f, 0.70f, 1f); // #2576B3 D&D blue
 
-            return btn;
+            // Right arrow
+            GameObject arrowGO = new GameObject("Arrow", typeof(RectTransform), typeof(TextMeshProUGUI));
+            arrowGO.transform.SetParent(btnGO.transform, false);
+            var aRect = arrowGO.GetComponent<RectTransform>();
+            aRect.anchorMin = new Vector2(1f, 0.5f);
+            aRect.anchorMax = new Vector2(1f, 0.5f);
+            aRect.pivot = new Vector2(1f, 0.5f);
+            aRect.anchoredPosition = new Vector2(-16, 0);
+            aRect.sizeDelta = new Vector2(30, 30);
+            var aTmp = arrowGO.GetComponent<TextMeshProUGUI>();
+            aTmp.text = "<b>></b>";
+            aTmp.fontSize = 22;
+            aTmp.alignment = TextAlignmentOptions.Center;
+            aTmp.color = new Color(0.50f, 0.57f, 0.65f, 1f); // #8091A5
+
+            return (btn, eqTmp);
         }
 
-        private static void CreateExportModal(Transform canvasTr, Sprite boxSprite, Sprite cardSprite)
+        private static void CreateExportButton(Transform parent, Sprite boxSprite)
         {
-            // Bottom Right Export Button
             GameObject exportBtnGO = new GameObject("ExportButton", typeof(RectTransform), typeof(Image), typeof(Button));
-            exportBtnGO.transform.SetParent(canvasTr, false);
+            exportBtnGO.transform.SetParent(parent, false);
             var bRect = exportBtnGO.GetComponent<RectTransform>();
-            bRect.anchorMin = new Vector2(1f, 0f);
+            bRect.anchorMin = new Vector2(0f, 0f);
             bRect.anchorMax = new Vector2(1f, 0f);
-            bRect.pivot = new Vector2(1f, 0f);
-            bRect.anchoredPosition = new Vector2(-30, 20);
-            bRect.sizeDelta = new Vector2(280, 54);
+            bRect.pivot = new Vector2(0.5f, 0f);
+            bRect.anchoredPosition = new Vector2(0, 16);
+            bRect.sizeDelta = new Vector2(-32, 52);
 
             var bImg = exportBtnGO.GetComponent<Image>();
             bImg.sprite = boxSprite;
-            bImg.color = new Color(0.85f, 0.22f, 0.22f, 1f); // D&D Beyond Red
+            bImg.type = Image.Type.Sliced;
+            bImg.color = new Color(0.72f, 0.11f, 0.11f, 1f); // #B71C1C D&D Beyond Red
             var exportBtn = exportBtnGO.GetComponent<Button>();
 
             GameObject btnTextGO = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
@@ -1534,11 +1938,14 @@ namespace DNDBeyond.Editor
             btRect.sizeDelta = Vector2.zero;
             var btTmp = btnTextGO.GetComponent<TextMeshProUGUI>();
             btTmp.text = "<b>Export to D&D Beyond -></b>";
-            btTmp.fontSize = 16;
+            btTmp.fontSize = 18;
+            btTmp.fontStyle = FontStyles.Bold;
             btTmp.alignment = TextAlignmentOptions.Center;
             btTmp.color = Color.white;
+        }
 
-            // Modal Overlay
+        private static void CreateExportModal(Transform canvasTr, Sprite boxSprite, Sprite cardSprite)
+        {
             GameObject overlayGO = new GameObject("ExportModalOverlay", typeof(RectTransform), typeof(Image));
             overlayGO.transform.SetParent(canvasTr, false);
             var oRect = overlayGO.GetComponent<RectTransform>();
@@ -1547,23 +1954,23 @@ namespace DNDBeyond.Editor
             oRect.sizeDelta = Vector2.zero;
             var oImg = overlayGO.GetComponent<Image>();
             oImg.sprite = boxSprite;
-            oImg.color = new Color(0f, 0f, 0f, 0.75f);
+            oImg.color = new Color(0f, 0f, 0f, 0.70f);
 
-            // Modal Card
             GameObject modalCardGO = new GameObject("ModalCard", typeof(RectTransform), typeof(Image));
             modalCardGO.transform.SetParent(overlayGO.transform, false);
             var mRect = modalCardGO.GetComponent<RectTransform>();
             mRect.anchorMin = new Vector2(0.5f, 0.5f);
             mRect.anchorMax = new Vector2(0.5f, 0.5f);
             mRect.pivot = new Vector2(0.5f, 0.5f);
-            mRect.sizeDelta = new Vector2(560, 480);
+            mRect.sizeDelta = new Vector2(620, 520);
 
             var mImg = modalCardGO.GetComponent<Image>();
             mImg.sprite = cardSprite;
             mImg.type = Image.Type.Sliced;
-            mImg.color = new Color(0.12f, 0.14f, 0.19f, 1f);
+            mImg.color = Color.white; // Crisp white card
 
-            var exportUI = exportBtnGO.AddComponent<ExportSummaryUI>();
+            var exportBtn = GameObject.Find("ExportButton")?.GetComponent<Button>();
+            var exportUI = exportBtn != null ? exportBtn.gameObject.AddComponent<ExportSummaryUI>() : modalCardGO.AddComponent<ExportSummaryUI>();
 
             // Modal Header
             GameObject mHeadGO = new GameObject("ModalHeader", typeof(RectTransform), typeof(TextMeshProUGUI));
@@ -1572,13 +1979,14 @@ namespace DNDBeyond.Editor
             mhRect.anchorMin = new Vector2(0f, 1f);
             mhRect.anchorMax = new Vector2(1f, 1f);
             mhRect.pivot = new Vector2(0.5f, 1f);
-            mhRect.anchoredPosition = new Vector2(0, -20);
-            mhRect.sizeDelta = new Vector2(-40, 36);
+            mhRect.anchoredPosition = new Vector2(0, -22);
+            mhRect.sizeDelta = new Vector2(-40, 40);
             var mhTmp = mHeadGO.GetComponent<TextMeshProUGUI>();
             mhTmp.text = "<b>D&D BEYOND EXPORT SUMMARY</b>";
-            mhTmp.fontSize = 20;
+            mhTmp.fontSize = 26;
+            mhTmp.fontStyle = FontStyles.Bold;
             mhTmp.alignment = TextAlignmentOptions.Center;
-            mhTmp.color = Color.white;
+            mhTmp.color = new Color(0.14f, 0.15f, 0.17f, 1f);
 
             // Details Text
             GameObject detailsGO = new GameObject("DetailsText", typeof(RectTransform), typeof(TextMeshProUGUI));
@@ -1587,13 +1995,13 @@ namespace DNDBeyond.Editor
             dRect.anchorMin = new Vector2(0f, 1f);
             dRect.anchorMax = new Vector2(1f, 1f);
             dRect.pivot = new Vector2(0f, 1f);
-            dRect.anchoredPosition = new Vector2(30, -70);
-            dRect.sizeDelta = new Vector2(-60, 140);
+            dRect.anchoredPosition = new Vector2(32, -75);
+            dRect.sizeDelta = new Vector2(-64, 150);
             var dTmp = detailsGO.GetComponent<TextMeshProUGUI>();
-            dTmp.text = "Species: Tiefling\nClass: Barbarian\nArmor: Plate Armor (AC 18)\nWeapon: Greataxe (1d12 Slashing)";
-            dTmp.fontSize = 16;
+            dTmp.text = "Species: (None)\nClass: (None)\nArmor: (None)\nWeapon: (None)";
+            dTmp.fontSize = 17;
             dTmp.lineSpacing = 10;
-            dTmp.color = new Color(0.9f, 0.92f, 0.95f);
+            dTmp.color = new Color(0.24f, 0.26f, 0.30f, 1f);
 
             // Rule Harmony Text
             GameObject ruleGO = new GameObject("RuleHarmonyText", typeof(RectTransform), typeof(TextMeshProUGUI));
@@ -1603,12 +2011,12 @@ namespace DNDBeyond.Editor
             rRect.anchorMax = new Vector2(1f, 1f);
             rRect.pivot = new Vector2(0.5f, 0.5f);
             rRect.anchoredPosition = new Vector2(0, -35);
-            rRect.sizeDelta = new Vector2(-60, -260);
+            rRect.sizeDelta = new Vector2(-64, -280);
             var rTmp = ruleGO.GetComponent<TextMeshProUGUI>();
-            rTmp.text = "<color=#FF8844><b>[Rage Restriction]</b></color>\nBarbarians lose Rage benefits when wearing Heavy Armor!";
-            rTmp.fontSize = 14;
-            rTmp.color = Color.white;
-            // word wrapping enabled by default
+            rTmp.text = "<color=#B71C1C><b>[Synergy Status]</b></color>\nReady to export build to D&D Beyond!";
+            rTmp.fontSize = 16;
+            rTmp.lineSpacing = 6;
+            rTmp.color = new Color(0.35f, 0.38f, 0.42f, 1f);
 
             // Feedback Text
             GameObject feedGO = new GameObject("FeedbackText", typeof(RectTransform), typeof(TextMeshProUGUI));
@@ -1617,11 +2025,11 @@ namespace DNDBeyond.Editor
             fRect.anchorMin = new Vector2(0f, 0f);
             fRect.anchorMax = new Vector2(1f, 0f);
             fRect.pivot = new Vector2(0.5f, 0f);
-            fRect.anchoredPosition = new Vector2(0, 75);
-            fRect.sizeDelta = new Vector2(-60, 30);
+            fRect.anchoredPosition = new Vector2(0, 80);
+            fRect.sizeDelta = new Vector2(-60, 32);
             var fTmp = feedGO.GetComponent<TextMeshProUGUI>();
             fTmp.text = "";
-            fTmp.fontSize = 14;
+            fTmp.fontSize = 16;
             fTmp.alignment = TextAlignmentOptions.Center;
 
             // Confirm Export Button
@@ -1631,11 +2039,12 @@ namespace DNDBeyond.Editor
             confRect.anchorMin = new Vector2(0.5f, 0f);
             confRect.anchorMax = new Vector2(0.5f, 0f);
             confRect.pivot = new Vector2(0.5f, 0f);
-            confRect.anchoredPosition = new Vector2(-80, 20);
-            confRect.sizeDelta = new Vector2(180, 44);
+            confRect.anchoredPosition = new Vector2(-90, 22);
+            confRect.sizeDelta = new Vector2(200, 48);
             var confImg = confirmBtnGO.GetComponent<Image>();
             confImg.sprite = boxSprite;
-            confImg.color = new Color(0.22f, 0.65f, 0.35f, 1f);
+            confImg.type = Image.Type.Sliced;
+            confImg.color = new Color(0.18f, 0.55f, 0.25f, 1f); // Forest green
             var confBtn = confirmBtnGO.GetComponent<Button>();
 
             GameObject confTextGO = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
@@ -1645,8 +2054,8 @@ namespace DNDBeyond.Editor
             ctRect.anchorMax = Vector2.one;
             ctRect.sizeDelta = Vector2.zero;
             var ctTmp = confTextGO.GetComponent<TextMeshProUGUI>();
-            ctTmp.text = "Confirm Export";
-            ctTmp.fontSize = 14;
+            ctTmp.text = "<b>Confirm Export</b>";
+            ctTmp.fontSize = 18;
             ctTmp.alignment = TextAlignmentOptions.Center;
             ctTmp.color = Color.white;
 
@@ -1657,11 +2066,12 @@ namespace DNDBeyond.Editor
             clRect.anchorMin = new Vector2(0.5f, 0f);
             clRect.anchorMax = new Vector2(0.5f, 0f);
             clRect.pivot = new Vector2(0.5f, 0f);
-            clRect.anchoredPosition = new Vector2(110, 20);
-            clRect.sizeDelta = new Vector2(160, 44);
+            clRect.anchoredPosition = new Vector2(115, 22);
+            clRect.sizeDelta = new Vector2(180, 48);
             var clImg = closeBtnGO.GetComponent<Image>();
             clImg.sprite = boxSprite;
-            clImg.color = new Color(0.3f, 0.35f, 0.42f, 1f);
+            clImg.type = Image.Type.Sliced;
+            clImg.color = new Color(0.88f, 0.88f, 0.90f, 1f);
             var clBtn = closeBtnGO.GetComponent<Button>();
 
             GameObject clTextGO = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
@@ -1672,9 +2082,9 @@ namespace DNDBeyond.Editor
             cltRect.sizeDelta = Vector2.zero;
             var cltTmp = clTextGO.GetComponent<TextMeshProUGUI>();
             cltTmp.text = "Back to Creator";
-            cltTmp.fontSize = 14;
+            cltTmp.fontSize = 18;
             cltTmp.alignment = TextAlignmentOptions.Center;
-            cltTmp.color = Color.white;
+            cltTmp.color = new Color(0.24f, 0.26f, 0.30f, 1f);
 
             SetPrivateField(exportUI, "openExportButton", exportBtn);
             SetPrivateField(exportUI, "modalOverlay", overlayGO);

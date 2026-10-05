@@ -10,15 +10,17 @@ namespace DNDBeyond.UI
     {
         [Header("UI References")]
         [SerializeField] private Image iconImage;
+        [SerializeField] private Image badgeBackgroundImage;
         [SerializeField] private TextMeshProUGUI titleText;
         [SerializeField] private TextMeshProUGUI subtitleText;
+        [SerializeField] private TextMeshProUGUI chevronText;
         [SerializeField] private Image selectionBorder;
         [SerializeField] private ItemDragHandler dragHandler;
         [SerializeField] private Button clickButton;
 
         [Header("Styling")]
-        [SerializeField] private Color selectedColor = new Color(0.95f, 0.75f, 0.2f, 1f);
-        [SerializeField] private Color normalBorderColor = new Color(0.3f, 0.35f, 0.4f, 0.5f);
+        [SerializeField] private Color selectedColor = new Color(0.85f, 0.18f, 0.18f, 1f); // D&D Beyond Red
+        [SerializeField] private Color normalBorderColor = new Color(0.88f, 0.88f, 0.90f, 1f); // #E0E0E0
 
         private CharacterOptionSO optionData;
 
@@ -35,18 +37,42 @@ namespace DNDBeyond.UI
 
             if (titleText != null)
             {
-                titleText.text = data != null ? data.displayName : "Item";
+                titleText.text = data != null ? data.displayName.ToUpper() : "ITEM";
+                titleText.color = new Color(0.14f, 0.15f, 0.16f); // #242527
             }
 
             if (subtitleText != null)
             {
                 subtitleText.text = GetSubtitleText(data);
+                subtitleText.color = new Color(0.40f, 0.40f, 0.40f); // #666666
             }
 
-            if (iconImage != null && data != null && data.icon != null)
+            if (data != null)
             {
-                iconImage.sprite = data.icon;
-                iconImage.color = data.primaryColor;
+                if (data.category == OptionCategory.Class)
+                {
+                    if (badgeBackgroundImage != null) badgeBackgroundImage.color = data.primaryColor;
+                    if (iconImage != null && data.icon != null)
+                    {
+                        iconImage.sprite = data.icon;
+                        iconImage.color = Color.white; // Official white vector class emblem
+                    }
+                }
+                else
+                {
+                    if (badgeBackgroundImage != null) badgeBackgroundImage.color = new Color(0.93f, 0.94f, 0.96f);
+                    if (iconImage != null && data.icon != null)
+                    {
+                        iconImage.sprite = data.icon;
+                        iconImage.color = data.primaryColor;
+                    }
+                }
+            }
+
+            if (chevronText != null)
+            {
+                chevronText.text = ">";
+                chevronText.color = new Color(0.50f, 0.57f, 0.65f); // #8091A5
             }
 
             SetSelected(isSelected);

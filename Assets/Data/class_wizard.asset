@@ -16,11 +16,12 @@ MonoBehaviour:
   displayName: Wizard
   category: 1
   raceType: 0
-  classType: 2
-  icon: {fileID: 21300000, guid: 182b904d793142b4c878a3d5f9c3f3dd, type: 3}
+  classType: 12
+  icon: {fileID: 3286163911610860551, guid: f31dc9b2867d1094baa4c6e44ba6102e, type: 3}
   mannequinSprite: {fileID: 21300000, guid: 4a100338a92b66a4fb4f7479399d576e, type: 3}
-  primaryColor: {r: 0.25, g: 0.65, b: 1, a: 1}
+  primaryColor: {r: 0.12, g: 0.53, b: 0.9, a: 1}
   secondaryColor: {r: 1, g: 1, b: 1, a: 1}
-  flavorTagline: Arcane Spellcasting & Spellbook
-  description: Scholarly magic-user capable of manipulating reality through study
-    and arcane focus.
+  flavorTagline: A scholarly master of the arcane who bends reality to their will
+    through intellect and spellbooks.
+  description: A scholarly master of the arcane who bends reality to their will through
+    intellect and spellbooks.
