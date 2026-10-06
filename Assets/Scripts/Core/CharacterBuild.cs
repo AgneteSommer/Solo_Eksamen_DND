@@ -11,6 +11,8 @@ namespace DNDBeyond.Core
         public CharacterOptionSO currentClass;
         public EquipmentSO currentArmor;
         public EquipmentSO currentWeapon;
+        public CharacterOptionSO currentHair;
+        public CharacterOptionSO currentHorns;
 
         public CharacterRace RaceType => currentRace != null ? currentRace.raceType : CharacterRace.None;
         public CharacterClass ClassType => currentClass != null ? currentClass.classType : CharacterClass.None;
@@ -21,6 +23,8 @@ namespace DNDBeyond.Core
         public string ClassName => currentClass != null ? currentClass.displayName : "None";
         public string ArmorName => currentArmor != null ? currentArmor.displayName : "Unarmored";
         public string WeaponName => currentWeapon != null ? currentWeapon.displayName : "Unarmed";
+        public string HairName => currentHair != null ? currentHair.displayName : "Default";
+        public string HornsName => currentHorns != null ? currentHorns.displayName : "None";
 
         public int CalculateAC()
         {

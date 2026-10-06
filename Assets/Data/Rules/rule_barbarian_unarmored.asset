@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: rule_barbarian_unarmored
   m_EditorClassIdentifier: Assembly-CSharp::DNDBeyond.Data.HarmonyRuleSO
   ruleId: rule_barbarian_unarmored
-  ruleTitle: Unarmored Defense
+  ruleTitle: 'Harmonious Synergy: Primal Toughness'
   harmonyState: 0
-  priority: 45
+  priority: 65
   checkClass: 1
   requiredClass: 1
   checkArmor: 1
@@ -24,6 +24,8 @@ MonoBehaviour:
   requiredWeapon: 0
   checkRace: 0
   requiredRace: 0
-  shortStatus: Unarmored Defense (AC 15)
-  insightNoteText: While not wearing armor, your Armor Class equals 10 + Dexterity
-    modifier + Constitution modifier (Base AC 15)!
+  ignoreIfRace: 0
+  ignoredRace: 0
+  shortStatus: Unarmored Defense Active (AC 15)
+  insightNoteText: While unarmored, your Armor Class equals 10 + Dexterity modifier
+    + Constitution modifier (Base AC 15), giving you primal resilience without steel!

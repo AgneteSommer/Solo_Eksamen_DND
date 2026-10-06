@@ -17,8 +17,9 @@ MonoBehaviour:
   category: 3
   raceType: 0
   classType: 0
-  icon: {fileID: 21300000, guid: 182b904d793142b4c878a3d5f9c3f3dd, type: 3}
-  mannequinSprite: {fileID: 21300000, guid: 182b904d793142b4c878a3d5f9c3f3dd, type: 3}
+  appearanceSlot: 0
+  icon: {fileID: 21300000, guid: 2d70cc134341579448f12219a7ee2679, type: 3}
+  mannequinSprite: {fileID: 21300000, guid: 2d70cc134341579448f12219a7ee2679, type: 3}
   primaryColor: {r: 1, g: 1, b: 1, a: 1}
   secondaryColor: {r: 1, g: 1, b: 1, a: 1}
   flavorTagline: 1d6 Bludgeoning (Arcane Focus)
@@ -28,8 +29,8 @@ MonoBehaviour:
   baseAC: 10
   stealthDisadvantage: 0
   requiresProficiency: 1
-  weaponType: 2
+  weaponType: 6
   damage: 1d6
   damageType: Bludgeoning
-  weaponProperties: Versatile (Focus)
+  weaponProperties: Versatile (Arcane Focus)
   isArcaneFocus: 1

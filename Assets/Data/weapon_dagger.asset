@@ -13,16 +13,18 @@ MonoBehaviour:
   m_Name: weapon_dagger
   m_EditorClassIdentifier: Assembly-CSharp::DNDBeyond.Data.EquipmentSO
   id: weapon_dagger
-  displayName: Dagger
+  displayName: Daggers
   category: 3
   raceType: 0
   classType: 0
-  icon: {fileID: 21300000, guid: 5f62a3e22d45ff749a98262e9ccc9990, type: 3}
-  mannequinSprite: {fileID: 21300000, guid: 5f62a3e22d45ff749a98262e9ccc9990, type: 3}
+  appearanceSlot: 0
+  icon: {fileID: 21300000, guid: 4cc862b2311db2741a5131d292fb709e, type: 3}
+  mannequinSprite: {fileID: 21300000, guid: 4cc862b2311db2741a5131d292fb709e, type: 3}
   primaryColor: {r: 1, g: 1, b: 1, a: 1}
   secondaryColor: {r: 1, g: 1, b: 1, a: 1}
   flavorTagline: 1d4 Piercing (Finesse, Light)
-  description: Swift and easily concealed blade suitable for precision strikes.
+  description: Swift and easily concealed twin blades suitable for precision sneak
+    attacks.
   armorType: 0
   baseAC: 10
   stealthDisadvantage: 0
@@ -30,5 +32,5 @@ MonoBehaviour:
   weaponType: 3
   damage: 1d4
   damageType: Piercing
-  weaponProperties: Finesse, Light, Thrown
+  weaponProperties: Finesse, Light
   isArcaneFocus: 0

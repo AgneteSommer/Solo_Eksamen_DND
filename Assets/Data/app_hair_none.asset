@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 74f41bbe1f95b7c4c8d01f8543b8fbc4, type: 3}
+  m_Name: app_hair_none
+  m_EditorClassIdentifier: Assembly-CSharp::DNDBeyond.Data.CharacterOptionSO
+  id: app_hair_none
+  displayName: No Hair (Bald)
+  category: 4
+  raceType: 0
+  classType: 0
+  appearanceSlot: 1
+  icon: {fileID: 0}
+  mannequinSprite: {fileID: 0}
+  primaryColor: {r: 1, g: 1, b: 1, a: 1}
+  secondaryColor: {r: 1, g: 1, b: 1, a: 1}
+  flavorTagline: Clean shaved look
+  description: Shaved head providing an austere, monastic appearance.

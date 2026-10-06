@@ -32,19 +32,36 @@ namespace DNDBeyond.Data
         [Header("Race Condition")]
         public bool checkRace = false;
         public CharacterRace requiredRace = CharacterRace.None;
+        public bool ignoreIfRace = false;
+        public CharacterRace ignoredRace = CharacterRace.None;
 
         [Header("Rule Insight Output")]
         public string shortStatus = "Harmonious Build";
         [TextArea(3, 6)]
         public string insightNoteText = "These choices synergize according to standard 5e rules.";
 
+        public bool IsQuirk => harmonyState == HarmonyState.DiscoveryQuirk;
+
         public bool Matches(CharacterRace race, CharacterClass charClass, ArmorType armor, WeaponType weapon)
         {
             if (checkClass && charClass != requiredClass) return false;
             if (checkArmor && armor != requiredArmor) return false;
-            if (checkWeapon && weapon != requiredWeapon) return false;
+            if (checkWeapon && !IsWeaponMatch(weapon, requiredWeapon)) return false;
             if (checkRace && race != requiredRace) return false;
+            if (ignoreIfRace && race == ignoredRace) return false;
             return true;
+        }
+
+        private static bool IsWeaponMatch(WeaponType current, WeaponType required)
+        {
+            if (current == required) return true;
+            if ((required == WeaponType.GreatSword || required == WeaponType.Greataxe) &&
+                (current == WeaponType.GreatSword || current == WeaponType.Greataxe))
+                return true;
+            if ((required == WeaponType.Staff || required == WeaponType.ArcaneStaff) &&
+                (current == WeaponType.Staff || current == WeaponType.ArcaneStaff))
+                return true;
+            return false;
         }
     }
 }

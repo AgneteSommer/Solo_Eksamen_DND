@@ -61,10 +61,18 @@ namespace DNDBeyond.UI
                 else
                 {
                     if (badgeBackgroundImage != null) badgeBackgroundImage.color = new Color(0.93f, 0.94f, 0.96f);
-                    if (iconImage != null && data.icon != null)
+                    if (iconImage != null)
                     {
-                        iconImage.sprite = data.icon;
-                        iconImage.color = data.primaryColor;
+                        if (data.icon != null)
+                        {
+                            iconImage.enabled = true;
+                            iconImage.sprite = data.icon;
+                            iconImage.color = data.primaryColor;
+                        }
+                        else
+                        {
+                            iconImage.enabled = false;
+                        }
                     }
                 }
             }

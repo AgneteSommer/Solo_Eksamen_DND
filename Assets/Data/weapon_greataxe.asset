@@ -13,22 +13,24 @@ MonoBehaviour:
   m_Name: weapon_greataxe
   m_EditorClassIdentifier: Assembly-CSharp::DNDBeyond.Data.EquipmentSO
   id: weapon_greataxe
-  displayName: Greataxe
+  displayName: Great Sword
   category: 3
   raceType: 0
   classType: 0
-  icon: {fileID: 21300000, guid: eae42502d20c74840bf73a45e9b45fe3, type: 3}
-  mannequinSprite: {fileID: 21300000, guid: eae42502d20c74840bf73a45e9b45fe3, type: 3}
+  appearanceSlot: 0
+  icon: {fileID: 21300000, guid: 6964bf5ab05fb184b86ac13727614b62, type: 3}
+  mannequinSprite: {fileID: 21300000, guid: 6964bf5ab05fb184b86ac13727614b62, type: 3}
   primaryColor: {r: 1, g: 1, b: 1, a: 1}
   secondaryColor: {r: 1, g: 1, b: 1, a: 1}
-  flavorTagline: 1d12 Slashing (Martial Heavy)
-  description: Massive bearded axe capable of cleaving through enemies in frenzy.
+  flavorTagline: 2d6 Slashing (Martial Heavy)
+  description: Massive two-handed greatsword capable of cleaving multiple foes in
+    sweeping arcs.
   armorType: 0
   baseAC: 10
   stealthDisadvantage: 0
   requiresProficiency: 1
-  weaponType: 1
-  damage: 1d12
+  weaponType: 4
+  damage: 2d6
   damageType: Slashing
   weaponProperties: Heavy, Two-Handed
   isArcaneFocus: 0

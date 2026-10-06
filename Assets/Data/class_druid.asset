@@ -17,8 +17,9 @@ MonoBehaviour:
   category: 1
   raceType: 0
   classType: 4
+  appearanceSlot: 0
   icon: {fileID: 3286163911610860551, guid: be0df8c2c275faf4a9d6842235f62721, type: 3}
-  mannequinSprite: {fileID: 21300000, guid: 4a100338a92b66a4fb4f7479399d576e, type: 3}
+  mannequinSprite: {fileID: 21300000, guid: 5fab996a157ffff419d34b935d629e8f, type: 3}
   primaryColor: {r: 0.26, g: 0.63, b: 0.28, a: 1}
   secondaryColor: {r: 1, g: 1, b: 1, a: 1}
   flavorTagline: A guardian of the wilderness who commands the forces of nature and

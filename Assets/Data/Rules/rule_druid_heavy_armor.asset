@@ -15,7 +15,7 @@ MonoBehaviour:
   ruleId: rule_druid_heavy_armor
   ruleTitle: 'Rule Quirk: Druidic Taboo'
   harmonyState: 1
-  priority: 90
+  priority: 100
   checkClass: 1
   requiredClass: 4
   checkArmor: 1
@@ -24,6 +24,8 @@ MonoBehaviour:
   requiredWeapon: 0
   checkRace: 0
   requiredRace: 0
-  shortStatus: Metal Armor Taboo
-  insightNoteText: Druids hold an ancient spiritual taboo against wearing armor made
-    of worked metal, preferring natural materials like hides and treated wood.
+  ignoreIfRace: 0
+  ignoredRace: 0
+  shortStatus: Metal Armor Taboo & Non-Proficient
+  insightNoteText: Druids lack heavy armor proficiency and hold an ancient taboo
+    against wearing worked metal armor, severing their connection to nature.

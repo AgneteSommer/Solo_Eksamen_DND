@@ -24,6 +24,8 @@ MonoBehaviour:
   requiredWeapon: 0
   checkRace: 0
   requiredRace: 0
+  ignoreIfRace: 0
+  ignoredRace: 0
   shortStatus: Spellcasting Completely Blocked
   insightNoteText: In D&D 5e, wearing armor you lack proficiency with prevents you
     from casting any spells! Wizards lack heavy armor proficiency.

@@ -24,6 +24,8 @@ MonoBehaviour:
   requiredWeapon: 0
   checkRace: 0
   requiredRace: 0
+  ignoreIfRace: 0
+  ignoredRace: 0
   shortStatus: Martial Arts & Movement Disabled
   insightNoteText: Monks lose their Martial Arts, Unarmored Movement, and Unarmored
-    Defense benefits when wearing any armor!
+    Defense benefits when wearing heavy armor!

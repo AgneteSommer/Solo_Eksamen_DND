@@ -15,7 +15,7 @@ MonoBehaviour:
   ruleId: rule_paladin_heavy_armor
   ruleTitle: 'Harmonious Synergy: Holy Knight'
   harmonyState: 0
-  priority: 65
+  priority: 70
   checkClass: 1
   requiredClass: 7
   checkArmor: 1
@@ -24,6 +24,8 @@ MonoBehaviour:
   requiredWeapon: 0
   checkRace: 0
   requiredRace: 0
+  ignoreIfRace: 0
+  ignoredRace: 0
   shortStatus: Crusader Resilience (AC 18)
   insightNoteText: Paladins are trained to fight in heavy plate armor. Maximizes
     your survivability while delivering divine smites in melee!

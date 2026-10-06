@@ -35,6 +35,12 @@ namespace DNDBeyond.UI
         private Coroutine slideCoroutine;
         private HarmonyEvaluationResult lastResult;
 
+        private void Awake()
+        {
+            // Start closed and inactive on clean slate before any events fire
+            SetNoteCardVisible(false, immediate: true);
+        }
+
         private void Start()
         {
             if (d20Button != null)
@@ -52,7 +58,7 @@ namespace DNDBeyond.UI
                 CharacterCustomizerManager.Instance.OnHarmonyEvaluated += HandleHarmonyEvaluated;
             }
 
-            // Start closed on clean slate until a quirk is triggered or user toggles
+            // Confirm closed on clean slate
             SetNoteCardVisible(false, immediate: true);
         }
 
@@ -79,9 +85,15 @@ namespace DNDBeyond.UI
 
             if (d20StatusText != null)
             {
-                d20StatusText.text = isQuirk 
-                    ? "<b><color=#B71C1C>SYNERGY</color></b>\n<size=12><color=#666666>Rule Quirk Active (Click)</color></size>" 
-                    : "<b><color=#181818>SYNERGY</color></b>\n<size=12><color=#2E7D32>Harmonious</color></size>";
+                if (isQuirk)
+                {
+                    d20StatusText.text = "<b><color=#B71C1C>SYNERGY</color></b>\n<size=12><color=#666666>Rule Quirk Active (Click)</color></size>";
+                }
+                else
+                {
+                    string status = !string.IsNullOrEmpty(result.shortStatus) ? result.shortStatus : "Balanced Synergy";
+                    d20StatusText.text = $"<b><color=#181818>SYNERGY</color></b>\n<size=12><color=#2E7D32>{status}</color></size>";
+                }
             }
 
             if (quirkBadgeImage != null)
@@ -128,6 +140,11 @@ namespace DNDBeyond.UI
 
             if (slideCoroutine != null) StopCoroutine(slideCoroutine);
 
+            if (noteCardPanel != null && visible)
+            {
+                noteCardPanel.gameObject.SetActive(true);
+            }
+
             if (immediate)
             {
                 if (noteCardCanvasGroup != null)
@@ -139,6 +156,10 @@ namespace DNDBeyond.UI
                 if (noteCardPanel != null)
                 {
                     noteCardPanel.anchoredPosition = visible ? new Vector2(0, -95) : new Vector2(-430, -95);
+                    if (!visible)
+                    {
+                        noteCardPanel.gameObject.SetActive(false);
+                    }
                 }
             }
             else
@@ -150,6 +171,11 @@ namespace DNDBeyond.UI
         private IEnumerator DoSlideAnimation(bool visible)
         {
             if (noteCardPanel == null || noteCardCanvasGroup == null) yield break;
+
+            if (visible)
+            {
+                noteCardPanel.gameObject.SetActive(true);
+            }
 
             Vector2 startPos = noteCardPanel.anchoredPosition;
             Vector2 targetPos = visible ? new Vector2(0, -95) : new Vector2(-430, -95);
@@ -175,6 +201,11 @@ namespace DNDBeyond.UI
 
             noteCardPanel.anchoredPosition = targetPos;
             noteCardCanvasGroup.alpha = targetAlpha;
+
+            if (!visible && noteCardPanel != null)
+            {
+                noteCardPanel.gameObject.SetActive(false);
+            }
         }
 
         private IEnumerator DoD20Pulse(bool isQuirk)

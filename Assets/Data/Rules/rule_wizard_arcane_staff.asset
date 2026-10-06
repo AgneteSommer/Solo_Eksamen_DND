@@ -21,7 +21,7 @@ MonoBehaviour:
   checkArmor: 0
   requiredArmor: 0
   checkWeapon: 1
-  requiredWeapon: 2
+  requiredWeapon: 6
   checkRace: 0
   requiredRace: 0
   shortStatus: Spellcasting Focus Attuned

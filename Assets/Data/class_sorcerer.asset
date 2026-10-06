@@ -17,8 +17,9 @@ MonoBehaviour:
   category: 1
   raceType: 0
   classType: 10
+  appearanceSlot: 0
   icon: {fileID: 3286163911610860551, guid: 17d5ec9536c910a49ad46023e0fbdf70, type: 3}
-  mannequinSprite: {fileID: 21300000, guid: 4a100338a92b66a4fb4f7479399d576e, type: 3}
+  mannequinSprite: {fileID: 21300000, guid: 5fab996a157ffff419d34b935d629e8f, type: 3}
   primaryColor: {r: 0.76, g: 0.09, b: 0.36, a: 1}
   secondaryColor: {r: 1, g: 1, b: 1, a: 1}
   flavorTagline: A passionate magic wielder born with wild, raw arcane power coursing

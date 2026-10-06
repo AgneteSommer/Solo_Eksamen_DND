@@ -24,6 +24,8 @@ MonoBehaviour:
   requiredWeapon: 0
   checkRace: 0
   requiredRace: 0
+  ignoreIfRace: 0
+  ignoredRace: 0
   shortStatus: Innate Magic Blocked
   insightNoteText: Sorcerers possess no armor proficiencies. Non-proficient heavy
     armor restricts somatic movements and halts all spellcasting!

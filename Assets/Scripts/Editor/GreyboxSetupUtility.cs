@@ -19,6 +19,29 @@ namespace DNDBeyond.Editor
         private const string RULES_DIR = "Assets/Data/Rules";
         private const string PREFABS_DIR = "Assets/Prefabs";
 
+        [MenuItem("DND Beyond/0. Setup All Scenes & Build Settings")]
+        public static void SetupAllScenesAndBuildSettings()
+        {
+            GenerateAllAssets();
+
+            // 1. Build MainMenu Scene
+            BuildMainMenuScene();
+
+            // 2. Build SampleScene
+            var sampleScene = UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity", UnityEditor.SceneManagement.OpenSceneMode.Single);
+            UnityEditor.SceneManagement.EditorSceneManager.SetActiveScene(sampleScene);
+            BuildCompleteScene();
+            UnityEditor.SceneManagement.EditorSceneManager.SaveScene(sampleScene, "Assets/Scenes/SampleScene.unity");
+
+            // 3. Register Build Settings
+            RegisterBuildSettings();
+
+            // 4. Return to MainMenu Scene for testing
+            UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/Scenes/MainMenu.unity", UnityEditor.SceneManagement.OpenSceneMode.Single);
+
+            Debug.Log("<color=#44FF88><b>D&D Beyond:</b> All Scenes & Build Settings Built & Configured Successfully!</color>");
+        }
+
         [MenuItem("DND Beyond/1. Generate Greybox Sprites & Assets")]
         public static void GenerateAllAssets()
         {
@@ -42,6 +65,9 @@ namespace DNDBeyond.Editor
             // Setup Camera
             SetupCamera();
 
+            // Setup Background
+            SetupSceneBackground();
+
             // Setup Mannequin grounded with platform directly under soles of feet
             var mannequinObj = SetupMannequin();
 
@@ -56,6 +82,137 @@ namespace DNDBeyond.Editor
             UnityEditor.SceneManagement.EditorSceneManager.SaveOpenScenes();
 
             Debug.Log("<color=#44FF88><b>D&D Beyond:</b> Complete Refactored Scene Successfully Built and Saved!</color>");
+        }
+
+        [MenuItem("DND Beyond/3. Build Main Menu Scene")]
+        public static void BuildMainMenuScene()
+        {
+            EnsureDirectories();
+            string scenePath = "Assets/Scenes/MainMenu.unity";
+            UnityEngine.SceneManagement.Scene menuScene;
+            if (File.Exists(scenePath))
+            {
+                menuScene = UnityEditor.SceneManagement.EditorSceneManager.OpenScene(scenePath, UnityEditor.SceneManagement.OpenSceneMode.Single);
+            }
+            else
+            {
+                menuScene = UnityEditor.SceneManagement.EditorSceneManager.NewScene(
+                    UnityEditor.SceneManagement.NewSceneSetup.EmptyScene,
+                    UnityEditor.SceneManagement.NewSceneMode.Single);
+            }
+
+            // Clean existing objects
+            var rootObjects = menuScene.GetRootGameObjects();
+            for (int i = rootObjects.Length - 1; i >= 0; i--)
+            {
+                UnityEngine.Object.DestroyImmediate(rootObjects[i]);
+            }
+
+            // 1. Camera
+            var camObj = new GameObject("Main Camera", typeof(Camera), typeof(AudioListener));
+            var cam = camObj.GetComponent<Camera>();
+            cam.orthographic = true;
+            cam.orthographicSize = 5f;
+            cam.clearFlags = CameraClearFlags.SolidColor;
+            cam.backgroundColor = new Color(0.04f, 0.04f, 0.05f, 1f);
+            cam.transform.position = new Vector3(0, 0, -10f);
+
+            // 2. Event System
+            var esGO = new GameObject("EventSystem", typeof(UnityEngine.EventSystems.EventSystem), typeof(InputSystemUIInputModule));
+
+            // 3. Canvas
+            var canvasGO = new GameObject("MainMenuCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+            var canvas = canvasGO.GetComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+
+            var scaler = canvasGO.GetComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1920, 1080);
+            scaler.matchWidthOrHeight = 0.5f;
+            scaler.dynamicPixelsPerUnit = 10f;
+
+            // 4. Aspect Ratio Container (aspect ratio 2880 / 1526 = 1.887287f)
+            GameObject containerGO = new GameObject("MenuContainer", typeof(RectTransform), typeof(AspectRatioFitter));
+            containerGO.transform.SetParent(canvasGO.transform, false);
+            var cRect = containerGO.GetComponent<RectTransform>();
+            cRect.anchorMin = new Vector2(0.5f, 0.5f);
+            cRect.anchorMax = new Vector2(0.5f, 0.5f);
+            cRect.pivot = new Vector2(0.5f, 0.5f);
+            cRect.anchoredPosition = Vector2.zero;
+            cRect.sizeDelta = new Vector2(1920, 1080);
+
+            var fitter = containerGO.GetComponent<AspectRatioFitter>();
+            fitter.aspectRatio = 2880f / 1526f;
+            fitter.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
+
+            // 5. Main Menu Background Image (Full screen base layer)
+            GameObject bgImgGO = new GameObject("BackgroundImage", typeof(RectTransform), typeof(Image));
+            bgImgGO.transform.SetParent(containerGO.transform, false);
+            var bgRect = bgImgGO.GetComponent<RectTransform>();
+            bgRect.anchorMin = Vector2.zero;
+            bgRect.anchorMax = Vector2.one;
+            bgRect.offsetMin = Vector2.zero;
+            bgRect.offsetMax = Vector2.zero;
+            var bgImg = bgImgGO.GetComponent<Image>();
+            bgImg.sprite = LoadSubSprite("Assets/Sprites/Main Menu/MainMenu_Background.png");
+            bgImg.preserveAspect = false;
+
+            // 6. Main Menu Button Overlay Image (Full screen 1:1 overlay, non-interactive)
+            GameObject overlayImgGO = new GameObject("ButtonOverlayImage", typeof(RectTransform), typeof(Image));
+            overlayImgGO.transform.SetParent(containerGO.transform, false);
+            var overlayRect = overlayImgGO.GetComponent<RectTransform>();
+            overlayRect.anchorMin = Vector2.zero;
+            overlayRect.anchorMax = Vector2.one;
+            overlayRect.offsetMin = Vector2.zero;
+            overlayRect.offsetMax = Vector2.zero;
+            var overlayImg = overlayImgGO.GetComponent<Image>();
+            overlayImg.sprite = LoadSubSprite("Assets/Sprites/Main Menu/MainMenu_Button.png");
+            overlayImg.preserveAspect = false;
+            overlayImg.raycastTarget = false;
+
+            // 7. Interactive Button Hit Target (strictly over Visual Designer card bounds: X[417..2430], Y[28..455])
+            // anchorMin = (417/2880, 28/1526) ≈ (0.1448, 0.0183)
+            // anchorMax = (2430/2880, 455/1526) ≈ (0.8438, 0.2982)
+            GameObject btnGO = new GameObject("VisualDesignerButton", typeof(RectTransform), typeof(Image), typeof(Button), typeof(MainMenuController));
+            btnGO.transform.SetParent(containerGO.transform, false);
+            var btnRect = btnGO.GetComponent<RectTransform>();
+            btnRect.anchorMin = new Vector2(417f / 2880f, 28f / 1526f);
+            btnRect.anchorMax = new Vector2(2430f / 2880f, 455f / 1526f);
+            btnRect.pivot = new Vector2(0.5f, 0.5f);
+            btnRect.offsetMin = Vector2.zero;
+            btnRect.offsetMax = Vector2.zero;
+
+            var btnImg = btnGO.GetComponent<Image>();
+            btnImg.color = new Color(0f, 0f, 0f, 0f); // Transparent raycast target
+            btnImg.raycastTarget = true;
+
+            var btn = btnGO.GetComponent<Button>();
+            btn.targetGraphic = btnImg;
+            var btnColors = btn.colors;
+            btnColors.normalColor = Color.clear;
+            btnColors.highlightedColor = new Color(1f, 1f, 1f, 0.08f);
+            btnColors.pressedColor = new Color(0f, 0f, 0f, 0.12f);
+            btn.colors = btnColors;
+
+            var controller = btnGO.GetComponent<MainMenuController>();
+            var clickClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sound/UI_Click.wav");
+            controller.Setup(clickClip, "SampleScene", 1, overlayImg);
+
+            // Save scene
+            UnityEditor.SceneManagement.EditorSceneManager.SaveScene(menuScene, scenePath);
+            Debug.Log("<color=#44FF88><b>D&D Beyond:</b> MainMenu scene successfully built and saved!</color>");
+        }
+
+        [MenuItem("DND Beyond/4. Register Build Settings")]
+        public static void RegisterBuildSettings()
+        {
+            var scenes = new EditorBuildSettingsScene[]
+            {
+                new EditorBuildSettingsScene("Assets/Scenes/MainMenu.unity", true),
+                new EditorBuildSettingsScene("Assets/Scenes/SampleScene.unity", true)
+            };
+            EditorBuildSettings.scenes = scenes;
+            Debug.Log("<color=#44FF88><b>D&D Beyond:</b> Build Settings registered (0: MainMenu, 1: SampleScene).</color>");
         }
 
         private static void EnsureDirectories()
@@ -533,6 +690,21 @@ namespace DNDBeyond.Editor
             return AssetDatabase.LoadAssetAtPath<Sprite>($"{SPRITES_DIR}/Classes/{className.ToLower()}.svg");
         }
 
+        private static Sprite LoadFinalSprite(string relativePath)
+        {
+            return AssetDatabase.LoadAssetAtPath<Sprite>($"Assets/Sprites/Final/{relativePath}.png");
+        }
+
+        private static Sprite LoadSubSprite(string assetPath)
+        {
+            var assets = AssetDatabase.LoadAllAssetsAtPath(assetPath);
+            foreach (var a in assets)
+            {
+                if (a is Sprite s) return s;
+            }
+            return AssetDatabase.LoadAssetAtPath<Sprite>(assetPath);
+        }
+
         private static List<CharacterOptionSO> CreateScriptableObjects()
         {
             List<CharacterOptionSO> list = new List<CharacterOptionSO>();
@@ -541,9 +713,9 @@ namespace DNDBeyond.Editor
             list.Add(CreateOrUpdateOption<CharacterOptionSO>("race_elf", "Elf", OptionCategory.Race, opt =>
             {
                 opt.raceType = CharacterRace.Elf;
-                opt.icon = LoadSprite("spr_elf_ears");
-                opt.mannequinSprite = LoadSprite("spr_elf_ears");
-                opt.primaryColor = new Color(0.96f, 0.88f, 0.82f);
+                opt.icon = LoadFinalSprite("Races/Elf");
+                opt.mannequinSprite = LoadFinalSprite("Races/Elf");
+                opt.primaryColor = Color.white;
                 opt.flavorTagline = "Fey Ancestry & Keen Senses";
                 opt.description = "Graceful humanoid with pointed ears and natural affinity for arcane dexterity.";
             }));
@@ -551,9 +723,9 @@ namespace DNDBeyond.Editor
             list.Add(CreateOrUpdateOption<CharacterOptionSO>("race_tiefling", "Tiefling", OptionCategory.Race, opt =>
             {
                 opt.raceType = CharacterRace.Tiefling;
-                opt.icon = LoadSprite("spr_tiefling_horns");
-                opt.mannequinSprite = LoadSprite("spr_tiefling_horns");
-                opt.primaryColor = new Color(0.85f, 0.35f, 0.38f);
+                opt.icon = LoadFinalSprite("Races/Tiefling");
+                opt.mannequinSprite = LoadFinalSprite("Races/Tiefling");
+                opt.primaryColor = Color.white;
                 opt.flavorTagline = "Hellish Resistance & Darkvision";
                 opt.description = "Horned humanoid bearing the infernal heritage of the Lower Planes.";
             }));
@@ -680,38 +852,38 @@ namespace DNDBeyond.Editor
             }));
 
             // Armors
-            list.Add(CreateOrUpdateOption<EquipmentSO>("armor_robes", "Cloth Robes", OptionCategory.Armor, eq =>
+            list.Add(CreateOrUpdateOption<EquipmentSO>("armor_robes", "No Armor (Clothes)", OptionCategory.Armor, eq =>
             {
                 eq.armorType = ArmorType.None;
                 eq.baseAC = 10;
                 eq.stealthDisadvantage = false;
-                eq.icon = LoadSprite("spr_armor_robes");
-                eq.mannequinSprite = LoadSprite("spr_armor_robes");
-                eq.primaryColor = new Color(0.45f, 0.38f, 0.65f);
+                eq.icon = LoadFinalSprite("Armor/No Armor");
+                eq.mannequinSprite = LoadFinalSprite("Armor/No Armor");
+                eq.primaryColor = Color.white;
                 eq.flavorTagline = "Unarmored Attire (No Restriction)";
-                eq.description = "Comfortable, unrestrictive scholar robes allowing complete somatic freedom.";
+                eq.description = "Comfortable, unrestrictive traveler robes allowing complete somatic freedom.";
             }));
 
-            list.Add(CreateOrUpdateOption<EquipmentSO>("armor_light", "Leather Armor", OptionCategory.Armor, eq =>
+            list.Add(CreateOrUpdateOption<EquipmentSO>("armor_light", "Light Armor", OptionCategory.Armor, eq =>
             {
                 eq.armorType = ArmorType.Light;
                 eq.baseAC = 11;
                 eq.stealthDisadvantage = false;
-                eq.icon = LoadSprite("spr_armor_light");
-                eq.mannequinSprite = LoadSprite("spr_armor_light");
-                eq.primaryColor = new Color(0.55f, 0.35f, 0.20f);
+                eq.icon = LoadFinalSprite("Armor/Light Armor");
+                eq.mannequinSprite = LoadFinalSprite("Armor/Light Armor");
+                eq.primaryColor = Color.white;
                 eq.flavorTagline = "Light Armor (AC 11 + Full DEX)";
                 eq.description = "Supple molded leather offering protection without impeding agility or stealth.";
             }));
 
-            list.Add(CreateOrUpdateOption<EquipmentSO>("armor_medium", "Scale Mail", OptionCategory.Armor, eq =>
+            list.Add(CreateOrUpdateOption<EquipmentSO>("armor_medium", "Medium Armor", OptionCategory.Armor, eq =>
             {
                 eq.armorType = ArmorType.Medium;
                 eq.baseAC = 14;
                 eq.stealthDisadvantage = true;
-                eq.icon = LoadSprite("spr_armor_medium");
-                eq.mannequinSprite = LoadSprite("spr_armor_medium");
-                eq.primaryColor = new Color(0.70f, 0.52f, 0.28f);
+                eq.icon = LoadFinalSprite("Armor/Medium Armor");
+                eq.mannequinSprite = LoadFinalSprite("Armor/Medium Armor");
+                eq.primaryColor = Color.white;
                 eq.flavorTagline = "Medium Armor (AC 14 + DEX max 2)";
                 eq.description = "Overlapping bronze and iron scales. Sturdy protection, but causes disadvantage on stealth.";
             }));
@@ -721,54 +893,119 @@ namespace DNDBeyond.Editor
                 eq.armorType = ArmorType.Heavy;
                 eq.baseAC = 18;
                 eq.stealthDisadvantage = true;
-                eq.icon = LoadSprite("spr_armor_heavy");
-                eq.mannequinSprite = LoadSprite("spr_armor_heavy");
-                eq.primaryColor = new Color(0.85f, 0.88f, 0.92f);
+                eq.icon = LoadFinalSprite("Armor/Heavy Armor");
+                eq.mannequinSprite = LoadFinalSprite("Armor/Heavy Armor");
+                eq.primaryColor = Color.white;
                 eq.flavorTagline = "Heavy Armor (AC 18 Flat, Disadv Stealth)";
                 eq.description = "Interlocking steel plates covering the entire body. Maximum AC, but requires heavy armor proficiency.";
             }));
 
             // Weapons
-            list.Add(CreateOrUpdateOption<EquipmentSO>("weapon_greataxe", "Greataxe", OptionCategory.Weapon, eq =>
+            list.Add(CreateOrUpdateOption<EquipmentSO>("weapon_dagger", "Daggers", OptionCategory.Weapon, eq =>
             {
-                eq.weaponType = WeaponType.Greataxe;
-                eq.damage = "1d12";
+                eq.weaponType = WeaponType.Dagger;
+                eq.damage = "1d4";
+                eq.damageType = "Piercing";
+                eq.weaponProperties = "Finesse, Light";
+                eq.isArcaneFocus = false;
+                eq.icon = LoadFinalSprite("Weapons/Daggers");
+                eq.mannequinSprite = LoadFinalSprite("Weapons/Daggers");
+                eq.primaryColor = Color.white;
+                eq.flavorTagline = "1d4 Piercing (Finesse, Light)";
+                eq.description = "Swift and easily concealed twin blades suitable for precision sneak attacks.";
+            }));
+
+            list.Add(CreateOrUpdateOption<EquipmentSO>("weapon_greataxe", "Great Sword", OptionCategory.Weapon, eq =>
+            {
+                eq.weaponType = WeaponType.GreatSword;
+                eq.damage = "2d6";
                 eq.damageType = "Slashing";
                 eq.weaponProperties = "Heavy, Two-Handed";
                 eq.isArcaneFocus = false;
-                eq.icon = LoadSprite("spr_weapon_greataxe");
-                eq.mannequinSprite = LoadSprite("spr_weapon_greataxe");
+                eq.icon = LoadFinalSprite("Weapons/Great Sword");
+                eq.mannequinSprite = LoadFinalSprite("Weapons/Great Sword");
                 eq.primaryColor = Color.white;
-                eq.flavorTagline = "1d12 Slashing (Martial Heavy)";
-                eq.description = "Massive bearded axe capable of cleaving through enemies in frenzy.";
+                eq.flavorTagline = "2d6 Slashing (Martial Heavy)";
+                eq.description = "Massive two-handed greatsword capable of cleaving multiple foes in sweeping arcs.";
+            }));
+
+            list.Add(CreateOrUpdateOption<EquipmentSO>("weapon_longbow", "Long Bow", OptionCategory.Weapon, eq =>
+            {
+                eq.weaponType = WeaponType.LongBow;
+                eq.damage = "1d8";
+                eq.damageType = "Piercing";
+                eq.weaponProperties = "Heavy, Two-Handed, Ranged";
+                eq.isArcaneFocus = false;
+                eq.icon = LoadFinalSprite("Weapons/Long Bow");
+                eq.mannequinSprite = LoadFinalSprite("Weapons/Long Bow");
+                eq.primaryColor = Color.white;
+                eq.flavorTagline = "1d8 Piercing (Ranged Martial)";
+                eq.description = "Curved yew longbow delivering lethal arrows from extraordinary distances.";
             }));
 
             list.Add(CreateOrUpdateOption<EquipmentSO>("weapon_staff", "Arcane Staff", OptionCategory.Weapon, eq =>
             {
-                eq.weaponType = WeaponType.ArcaneStaff;
+                eq.weaponType = WeaponType.Staff;
                 eq.damage = "1d6";
                 eq.damageType = "Bludgeoning";
-                eq.weaponProperties = "Versatile (Focus)";
+                eq.weaponProperties = "Versatile (Arcane Focus)";
                 eq.isArcaneFocus = true;
-                eq.icon = LoadSprite("spr_weapon_staff");
-                eq.mannequinSprite = LoadSprite("spr_weapon_staff");
+                eq.icon = LoadFinalSprite("Weapons/Staff");
+                eq.mannequinSprite = LoadFinalSprite("Weapons/Staff");
                 eq.primaryColor = Color.white;
                 eq.flavorTagline = "1d6 Bludgeoning (Arcane Focus)";
                 eq.description = "Quarterstaff crowned with an attuned crystal orb, channeling magical spells.";
             }));
 
-            list.Add(CreateOrUpdateOption<EquipmentSO>("weapon_dagger", "Dagger", OptionCategory.Weapon, eq =>
+            // Appearance: Hair & Horns
+            list.Add(CreateOrUpdateOption<CharacterOptionSO>("app_hair_1", "Braided Hair", OptionCategory.Appearance, opt =>
             {
-                eq.weaponType = WeaponType.Dagger;
-                eq.damage = "1d4";
-                eq.damageType = "Piercing";
-                eq.weaponProperties = "Finesse, Light, Thrown";
-                eq.isArcaneFocus = false;
-                eq.icon = LoadSprite("spr_weapon_dagger");
-                eq.mannequinSprite = LoadSprite("spr_weapon_dagger");
-                eq.primaryColor = Color.white;
-                eq.flavorTagline = "1d4 Piercing (Finesse, Light)";
-                eq.description = "Swift and easily concealed blade suitable for precision strikes.";
+                opt.appearanceSlot = AppearanceSlot.Hair;
+                opt.icon = LoadFinalSprite("Apperence/Hair1");
+                opt.mannequinSprite = LoadFinalSprite("Apperence/Hair1");
+                opt.primaryColor = Color.white;
+                opt.flavorTagline = "Neat adventurer braids";
+                opt.description = "Neatly bound braided hair suited for rugged wilderness exploration.";
+            }));
+
+            list.Add(CreateOrUpdateOption<CharacterOptionSO>("app_hair_2", "Wild Locks", OptionCategory.Appearance, opt =>
+            {
+                opt.appearanceSlot = AppearanceSlot.Hair;
+                opt.icon = LoadFinalSprite("Apperence/Hair2");
+                opt.mannequinSprite = LoadFinalSprite("Apperence/Hair2");
+                opt.primaryColor = Color.white;
+                opt.flavorTagline = "Untamed flowing hair";
+                opt.description = "Wind-swept wild locks flowing freely down the shoulders.";
+            }));
+
+            list.Add(CreateOrUpdateOption<CharacterOptionSO>("app_hair_none", "No Hair (Bald)", OptionCategory.Appearance, opt =>
+            {
+                opt.appearanceSlot = AppearanceSlot.Hair;
+                opt.icon = null;
+                opt.mannequinSprite = null;
+                opt.primaryColor = Color.white;
+                opt.flavorTagline = "Clean shaved look";
+                opt.description = "Shaved head providing an austere, monastic appearance.";
+            }));
+
+            list.Add(CreateOrUpdateOption<CharacterOptionSO>("app_horns_1", "Infernal Horns", OptionCategory.Appearance, opt =>
+            {
+                opt.appearanceSlot = AppearanceSlot.Horns;
+                opt.icon = LoadFinalSprite("Apperence/Horn1");
+                opt.mannequinSprite = LoadFinalSprite("Apperence/Horn1");
+                opt.primaryColor = Color.white;
+                opt.flavorTagline = "Swept-back demonic horns";
+                opt.description = "Curved infernal horns crowning the brow in classic fiendish tradition.";
+            }));
+
+            list.Add(CreateOrUpdateOption<CharacterOptionSO>("app_horns_none", "No Horns", OptionCategory.Appearance, opt =>
+            {
+                opt.appearanceSlot = AppearanceSlot.Horns;
+                opt.icon = null;
+                opt.mannequinSprite = null;
+                opt.primaryColor = Color.white;
+                opt.flavorTagline = "Smooth brow without horns";
+                opt.description = "A smooth mortal brow free of horns or infernal crests.";
             }));
 
             return list;
@@ -795,7 +1032,9 @@ namespace DNDBeyond.Editor
         {
             List<HarmonyRuleSO> rules = new List<HarmonyRuleSO>();
 
-            // Barbarian + Heavy Armor Quirk
+            // --- 1. ARMOR QUIRKS (Priority 100 - 90) ---
+
+            // Barbarian in Heavy Armor (Rage disabled)
             rules.Add(CreateOrUpdateRule("rule_barbarian_heavy_armor", "Rule Quirk: Barbarians & Heavy Armor", r =>
             {
                 r.harmonyState = HarmonyState.DiscoveryQuirk;
@@ -808,7 +1047,7 @@ namespace DNDBeyond.Editor
                 r.insightNoteText = "Barbarians can equip heavy armor, but their signature feature — Rage — does not grant damage resistance or bonus damage while wearing it!";
             }));
 
-            // Monk + Any Armor Quirk
+            // Monk in Armor (Disables Martial Arts & Unarmored Defense)
             rules.Add(CreateOrUpdateRule("rule_monk_heavy_armor", "Rule Quirk: Monks & Armor", r =>
             {
                 r.harmonyState = HarmonyState.DiscoveryQuirk;
@@ -818,7 +1057,7 @@ namespace DNDBeyond.Editor
                 r.checkArmor = true;
                 r.requiredArmor = ArmorType.Heavy;
                 r.shortStatus = "Martial Arts & Movement Disabled";
-                r.insightNoteText = "Monks lose their Martial Arts, Unarmored Movement, and Unarmored Defense benefits when wearing any armor!";
+                r.insightNoteText = "Monks lose their Martial Arts, Unarmored Movement, and Unarmored Defense benefits when wearing heavy armor!";
             }));
 
             rules.Add(CreateOrUpdateRule("rule_monk_medium_armor", "Rule Quirk: Monks & Armor", r =>
@@ -845,7 +1084,7 @@ namespace DNDBeyond.Editor
                 r.insightNoteText = "Even light armor negates a Monk's Martial Arts and Unarmored Defense features!";
             }));
 
-            // Wizard + Heavy/Med/Light Quirk
+            // Wizard in Armor (Blocks Spellcasting)
             rules.Add(CreateOrUpdateRule("rule_wizard_heavy_armor", "Rule Quirk: Non-Proficient Armor", r =>
             {
                 r.harmonyState = HarmonyState.DiscoveryQuirk;
@@ -861,19 +1100,19 @@ namespace DNDBeyond.Editor
             rules.Add(CreateOrUpdateRule("rule_wizard_medium_armor", "Rule Quirk: Non-Proficient Armor", r =>
             {
                 r.harmonyState = HarmonyState.DiscoveryQuirk;
-                r.priority = 90;
+                r.priority = 95;
                 r.checkClass = true;
                 r.requiredClass = CharacterClass.Wizard;
                 r.checkArmor = true;
                 r.requiredArmor = ArmorType.Medium;
-                r.shortStatus = "Spellcasting Completely Blocked";
-                r.insightNoteText = "Wizards lack proficiency with medium armor. Wearing armor without proficiency completely blocks all spellcasting gestures!";
+                r.shortStatus = "Spellcasting Blocked";
+                r.insightNoteText = "Wizards lack Medium Armor proficiency. In D&D 5e, wearing armor without proficiency completely blocks all spellcasting!";
             }));
 
             rules.Add(CreateOrUpdateRule("rule_wizard_light_armor", "Rule Quirk: Non-Proficient Armor", r =>
             {
                 r.harmonyState = HarmonyState.DiscoveryQuirk;
-                r.priority = 85;
+                r.priority = 90;
                 r.checkClass = true;
                 r.requiredClass = CharacterClass.Wizard;
                 r.checkArmor = true;
@@ -882,7 +1121,7 @@ namespace DNDBeyond.Editor
                 r.insightNoteText = "Standard Wizards lack Light Armor proficiency. You cannot cast spells while wearing armor you are not proficient with!";
             }));
 
-            // Sorcerer + Heavy/Med/Light Armor Quirk
+            // Sorcerer in Armor (Blocks Spellcasting)
             rules.Add(CreateOrUpdateRule("rule_sorcerer_heavy_armor", "Rule Quirk: Non-Proficient Armor", r =>
             {
                 r.harmonyState = HarmonyState.DiscoveryQuirk;
@@ -895,11 +1134,60 @@ namespace DNDBeyond.Editor
                 r.insightNoteText = "Sorcerers possess no armor proficiencies. Non-proficient heavy armor restricts somatic movements and halts all spellcasting!";
             }));
 
-            // Rogue + Heavy Armor Quirk
-            rules.Add(CreateOrUpdateRule("rule_rogue_heavy_armor", "Rule Quirk: Stealth Disadvantage", r =>
+            rules.Add(CreateOrUpdateRule("rule_sorcerer_medium_armor", "Rule Quirk: Non-Proficient Armor", r =>
+            {
+                r.harmonyState = HarmonyState.DiscoveryQuirk;
+                r.priority = 95;
+                r.checkClass = true;
+                r.requiredClass = CharacterClass.Sorcerer;
+                r.checkArmor = true;
+                r.requiredArmor = ArmorType.Medium;
+                r.shortStatus = "Innate Magic Blocked";
+                r.insightNoteText = "Sorcerers possess no armor proficiencies. Wearing medium armor halts all spellcasting gestures!";
+            }));
+
+            rules.Add(CreateOrUpdateRule("rule_sorcerer_light_armor", "Rule Quirk: Non-Proficient Armor", r =>
             {
                 r.harmonyState = HarmonyState.DiscoveryQuirk;
                 r.priority = 90;
+                r.checkClass = true;
+                r.requiredClass = CharacterClass.Sorcerer;
+                r.checkArmor = true;
+                r.requiredArmor = ArmorType.Light;
+                r.shortStatus = "Innate Magic Blocked";
+                r.insightNoteText = "Sorcerers possess no armor proficiencies. Even light armor blocks all spellcasting!";
+            }));
+
+            // Bard in Med/Heavy Armor (Blocks Spellcasting)
+            rules.Add(CreateOrUpdateRule("rule_bard_heavy_armor", "Rule Quirk: Non-Proficient Armor", r =>
+            {
+                r.harmonyState = HarmonyState.DiscoveryQuirk;
+                r.priority = 100;
+                r.checkClass = true;
+                r.requiredClass = CharacterClass.Bard;
+                r.checkArmor = true;
+                r.requiredArmor = ArmorType.Heavy;
+                r.shortStatus = "Spellcasting Blocked";
+                r.insightNoteText = "Bards lack Heavy Armor proficiency. In D&D 5e, wearing armor you lack proficiency with prevents you from casting any spells!";
+            }));
+
+            rules.Add(CreateOrUpdateRule("rule_bard_medium_armor", "Rule Quirk: Non-Proficient Armor", r =>
+            {
+                r.harmonyState = HarmonyState.DiscoveryQuirk;
+                r.priority = 95;
+                r.checkClass = true;
+                r.requiredClass = CharacterClass.Bard;
+                r.checkArmor = true;
+                r.requiredArmor = ArmorType.Medium;
+                r.shortStatus = "Spellcasting Blocked";
+                r.insightNoteText = "Bards lack Medium Armor proficiency. In D&D 5e, wearing armor without proficiency prevents you from casting spells!";
+            }));
+
+            // Rogue in Med/Heavy Armor (Disadvantage on Stealth & Attacks)
+            rules.Add(CreateOrUpdateRule("rule_rogue_heavy_armor", "Rule Quirk: Stealth Disadvantage", r =>
+            {
+                r.harmonyState = HarmonyState.DiscoveryQuirk;
+                r.priority = 100;
                 r.checkClass = true;
                 r.requiredClass = CharacterClass.Rogue;
                 r.checkArmor = true;
@@ -908,37 +1196,114 @@ namespace DNDBeyond.Editor
                 r.insightNoteText = "Rogues lack heavy armor proficiency. It imposes disadvantage on Dexterity ability checks (including Stealth) and attack rolls!";
             }));
 
-            // Druid + Heavy Metal Armor Quirk
+            rules.Add(CreateOrUpdateRule("rule_rogue_medium_armor", "Rule Quirk: Non-Proficient Armor", r =>
+            {
+                r.harmonyState = HarmonyState.DiscoveryQuirk;
+                r.priority = 90;
+                r.checkClass = true;
+                r.requiredClass = CharacterClass.Rogue;
+                r.checkArmor = true;
+                r.requiredArmor = ArmorType.Medium;
+                r.shortStatus = "Stealth Disadvantage";
+                r.insightNoteText = "Rogues lack medium armor proficiency. Non-proficient armor imposes disadvantage on Dexterity checks, including Stealth!";
+            }));
+
+            // Warlock in Med/Heavy Armor (Blocks Spellcasting)
+            rules.Add(CreateOrUpdateRule("rule_warlock_heavy_armor", "Rule Quirk: Non-Proficient Armor", r =>
+            {
+                r.harmonyState = HarmonyState.DiscoveryQuirk;
+                r.priority = 100;
+                r.checkClass = true;
+                r.requiredClass = CharacterClass.Warlock;
+                r.checkArmor = true;
+                r.requiredArmor = ArmorType.Heavy;
+                r.shortStatus = "Pact Magic Blocked";
+                r.insightNoteText = "Standard Warlocks lack heavy armor proficiency. Wearing non-proficient armor prevents you from casting pact spells!";
+            }));
+
+            rules.Add(CreateOrUpdateRule("rule_warlock_medium_armor", "Rule Quirk: Non-Proficient Armor", r =>
+            {
+                r.harmonyState = HarmonyState.DiscoveryQuirk;
+                r.priority = 95;
+                r.checkClass = true;
+                r.requiredClass = CharacterClass.Warlock;
+                r.checkArmor = true;
+                r.requiredArmor = ArmorType.Medium;
+                r.shortStatus = "Pact Magic Blocked";
+                r.insightNoteText = "Standard Warlocks lack medium armor proficiency. Non-proficient armor blocks all spellcasting!";
+            }));
+
+            // Druid in Metal Armor (Druidic Taboo)
             rules.Add(CreateOrUpdateRule("rule_druid_heavy_armor", "Rule Quirk: Druidic Taboo", r =>
+            {
+                r.harmonyState = HarmonyState.DiscoveryQuirk;
+                r.priority = 100;
+                r.checkClass = true;
+                r.requiredClass = CharacterClass.Druid;
+                r.checkArmor = true;
+                r.requiredArmor = ArmorType.Heavy;
+                r.shortStatus = "Metal Armor Taboo & Non-Proficient";
+                r.insightNoteText = "Druids lack heavy armor proficiency and hold an ancient taboo against wearing worked metal armor, severing their connection to nature.";
+            }));
+
+            rules.Add(CreateOrUpdateRule("rule_druid_medium_armor", "Rule Quirk: Druidic Taboo", r =>
             {
                 r.harmonyState = HarmonyState.DiscoveryQuirk;
                 r.priority = 90;
                 r.checkClass = true;
                 r.requiredClass = CharacterClass.Druid;
                 r.checkArmor = true;
-                r.requiredArmor = ArmorType.Heavy;
+                r.requiredArmor = ArmorType.Medium;
                 r.shortStatus = "Metal Armor Taboo";
-                r.insightNoteText = "Druids hold an ancient spiritual taboo against wearing armor made of worked metal, preferring natural materials like hides and treated wood.";
+                r.insightNoteText = "Druids will not wear armor made of metal! Metal disrupts their connection to primal nature.";
             }));
 
-            // Fighter + Heavy Armor Synergy
+            // Cleric in Heavy Armor
+            rules.Add(CreateOrUpdateRule("rule_cleric_heavy_armor", "Rule Quirk: Non-Proficient Armor", r =>
+            {
+                r.harmonyState = HarmonyState.DiscoveryQuirk;
+                r.priority = 95;
+                r.checkClass = true;
+                r.requiredClass = CharacterClass.Cleric;
+                r.checkArmor = true;
+                r.requiredArmor = ArmorType.Heavy;
+                r.shortStatus = "Non-Proficient Armor";
+                r.insightNoteText = "Standard Clerics lack Heavy Armor proficiency (reserved for specific divine domains like Life or War). Wearing non-proficient armor blocks spellcasting!";
+            }));
+
+            // Ranger in Heavy Armor
+            rules.Add(CreateOrUpdateRule("rule_ranger_heavy_armor", "Rule Quirk: Non-Proficient Armor", r =>
+            {
+                r.harmonyState = HarmonyState.DiscoveryQuirk;
+                r.priority = 95;
+                r.checkClass = true;
+                r.requiredClass = CharacterClass.Ranger;
+                r.checkArmor = true;
+                r.requiredArmor = ArmorType.Heavy;
+                r.shortStatus = "Non-Proficient Armor & Stealth Disadvantage";
+                r.insightNoteText = "Rangers lack heavy armor proficiency. It impairs stealth and imposes disadvantage on physical checks!";
+            }));
+
+            // --- 2. ARMOR SYNERGIES (Priority 70 - 60) ---
+
+            // Fighter in Heavy Armor
             rules.Add(CreateOrUpdateRule("rule_fighter_heavy_armor", "Harmonious Synergy: Frontline Master", r =>
             {
                 r.harmonyState = HarmonyState.Harmonious;
-                r.priority = 65;
+                r.priority = 70;
                 r.checkClass = true;
                 r.requiredClass = CharacterClass.Fighter;
                 r.checkArmor = true;
                 r.requiredArmor = ArmorType.Heavy;
-                r.shortStatus = "Master of Heavy Armor (AC 18)";
+                r.shortStatus = "Full Heavy Armor Mastery (AC 18)";
                 r.insightNoteText = "Full Heavy Armor proficiency grants maximum protection (AC 18), allowing you to hold the frontline with unmatched resilience!";
             }));
 
-            // Paladin + Heavy Armor Synergy
+            // Paladin in Heavy Armor
             rules.Add(CreateOrUpdateRule("rule_paladin_heavy_armor", "Harmonious Synergy: Holy Knight", r =>
             {
                 r.harmonyState = HarmonyState.Harmonious;
-                r.priority = 65;
+                r.priority = 70;
                 r.checkClass = true;
                 r.requiredClass = CharacterClass.Paladin;
                 r.checkArmor = true;
@@ -947,11 +1312,24 @@ namespace DNDBeyond.Editor
                 r.insightNoteText = "Paladins are trained to fight in heavy plate armor. Maximizes your survivability while delivering divine smites in melee!";
             }));
 
-            // Monk + Unarmored Synergy
+            // Barbarian Unarmored
+            rules.Add(CreateOrUpdateRule("rule_barbarian_unarmored", "Harmonious Synergy: Primal Toughness", r =>
+            {
+                r.harmonyState = HarmonyState.Harmonious;
+                r.priority = 65;
+                r.checkClass = true;
+                r.requiredClass = CharacterClass.Barbarian;
+                r.checkArmor = true;
+                r.requiredArmor = ArmorType.None;
+                r.shortStatus = "Unarmored Defense Active (AC 15)";
+                r.insightNoteText = "While unarmored, your Armor Class equals 10 + Dexterity modifier + Constitution modifier (Base AC 15), giving you primal resilience without steel!";
+            }));
+
+            // Monk Unarmored
             rules.Add(CreateOrUpdateRule("rule_monk_unarmored", "Harmonious Synergy: Martial Arts", r =>
             {
                 r.harmonyState = HarmonyState.Harmonious;
-                r.priority = 60;
+                r.priority = 65;
                 r.checkClass = true;
                 r.requiredClass = CharacterClass.Monk;
                 r.checkArmor = true;
@@ -960,24 +1338,189 @@ namespace DNDBeyond.Editor
                 r.insightNoteText = "While unarmored, your Armor Class equals 10 + Dexterity modifier + Wisdom modifier (Base AC 15) and your Martial Arts mobility is fully active!";
             }));
 
-            // Barbarian + Greataxe + Medium/Robes Synergy
-            rules.Add(CreateOrUpdateRule("rule_barbarian_peak_fury", "Harmonious Synergy: Primal Fury", r =>
+            // Wizard Unarmored
+            rules.Add(CreateOrUpdateRule("rule_wizard_unarmored", "Harmonious Synergy: Natural Arcane Robes", r =>
             {
                 r.harmonyState = HarmonyState.Harmonious;
                 r.priority = 60;
                 r.checkClass = true;
-                r.requiredClass = CharacterClass.Barbarian;
-                r.checkWeapon = true;
-                r.requiredWeapon = WeaponType.Greataxe;
-                r.shortStatus = "Peak Martial Synergy";
-                r.insightNoteText = "Peak Synergy: Full Rage benefits active! Wielding a two-handed Greataxe empowers Reckless Attack for massive 1d12 slashing damage.";
+                r.requiredClass = CharacterClass.Wizard;
+                r.checkArmor = true;
+                r.requiredArmor = ArmorType.None;
+                r.shortStatus = "Natural Arcane Robes";
+                r.insightNoteText = "Scholarly robes allow free somatic hand gestures for intricate spellcasting formulas without encumbrance.";
             }));
 
-            // Rogue + Dagger Synergy
+            // --- 3. WEAPON QUIRKS (Priority 95 - 80) ---
+
+            // Rogue with Great Sword (Sneak Attack requires Finesse)
+            rules.Add(CreateOrUpdateRule("rule_rogue_greatsword", "Rule Quirk: Sneak Attack Incompatible", r =>
+            {
+                r.harmonyState = HarmonyState.DiscoveryQuirk;
+                r.priority = 95;
+                r.checkClass = true;
+                r.requiredClass = CharacterClass.Rogue;
+                r.checkWeapon = true;
+                r.requiredWeapon = WeaponType.GreatSword;
+                r.shortStatus = "Sneak Attack Incompatible";
+                r.insightNoteText = "The Great Sword is a heavy two-handed weapon, not a finesse weapon. Sneak Attack strictly requires a Finesse or Ranged weapon!";
+            }));
+
+            // Monk with Great Sword (Disables Martial Arts)
+            rules.Add(CreateOrUpdateRule("rule_monk_greatsword", "Rule Quirk: Martial Arts Disabled", r =>
+            {
+                r.harmonyState = HarmonyState.DiscoveryQuirk;
+                r.priority = 95;
+                r.checkClass = true;
+                r.requiredClass = CharacterClass.Monk;
+                r.checkWeapon = true;
+                r.requiredWeapon = WeaponType.GreatSword;
+                r.shortStatus = "Martial Arts Disabled";
+                r.insightNoteText = "Heavy and two-handed weapons are not monk weapons. Wielding one disables your Martial Arts benefits and bonus unarmed strikes!";
+            }));
+
+            // Monk with Longbow (Heavy weapon disables Martial Arts)
+            rules.Add(CreateOrUpdateRule("rule_monk_longbow", "Rule Quirk: Heavy Weapon Impairment", r =>
+            {
+                r.harmonyState = HarmonyState.DiscoveryQuirk;
+                r.priority = 90;
+                r.checkClass = true;
+                r.requiredClass = CharacterClass.Monk;
+                r.checkWeapon = true;
+                r.requiredWeapon = WeaponType.LongBow;
+                r.shortStatus = "Martial Arts Disabled";
+                r.insightNoteText = "The Longbow has the Heavy property and is not a monk weapon. Wielding it disables your Martial Arts features!";
+            }));
+
+            // Casters with Great Sword (Non-proficient)
+            CharacterClass[] nonMartialCasters = new[] {
+                CharacterClass.Wizard, CharacterClass.Sorcerer, CharacterClass.Bard,
+                CharacterClass.Cleric, CharacterClass.Druid, CharacterClass.Warlock
+            };
+            foreach (var casterClass in nonMartialCasters)
+            {
+                string id = $"rule_{casterClass.ToString().ToLower()}_greatsword";
+                rules.Add(CreateOrUpdateRule(id, "Rule Quirk: Non-Proficient Weapon", r =>
+                {
+                    r.harmonyState = HarmonyState.DiscoveryQuirk;
+                    r.priority = 85;
+                    r.checkClass = true;
+                    r.requiredClass = casterClass;
+                    r.checkWeapon = true;
+                    r.requiredWeapon = WeaponType.GreatSword;
+                    r.shortStatus = "Non-Proficient Weapon";
+                    r.insightNoteText = $"{casterClass}s lack martial weapon proficiency. You cannot add your proficiency bonus to attack rolls with this heavy blade!";
+                }));
+            }
+
+            // Longbow on Non-Martials (Non-proficient, unless Elf!)
+            CharacterClass[] nonMartialShooters = new[] {
+                CharacterClass.Wizard, CharacterClass.Sorcerer, CharacterClass.Bard,
+                CharacterClass.Cleric, CharacterClass.Druid, CharacterClass.Rogue, CharacterClass.Warlock
+            };
+            foreach (var shooterClass in nonMartialShooters)
+            {
+                string id = $"rule_{shooterClass.ToString().ToLower()}_longbow";
+                rules.Add(CreateOrUpdateRule(id, "Rule Quirk: Non-Proficient Weapon", r =>
+                {
+                    r.harmonyState = HarmonyState.DiscoveryQuirk;
+                    r.priority = 80;
+                    r.checkClass = true;
+                    r.requiredClass = shooterClass;
+                    r.checkWeapon = true;
+                    r.requiredWeapon = WeaponType.LongBow;
+                    r.ignoreIfRace = true;
+                    r.ignoredRace = CharacterRace.Elf;
+                    r.shortStatus = "Non-Proficient (Unless Elf)";
+                    r.insightNoteText = $"{shooterClass}s lack Longbow proficiency. You cannot add your proficiency bonus to attack rolls (unless your race is Elf, granting Elf Weapon Training)!";
+                }));
+            }
+
+            // --- 4. WEAPON & RACIAL SYNERGIES (Priority 85 - 50) ---
+
+            // Elf + Longbow (Special Racial Synergy - overrides class quirks!)
+            rules.Add(CreateOrUpdateRule("rule_elf_longbow", "Harmonious Synergy: Elf Weapon Training", r =>
+            {
+                r.harmonyState = HarmonyState.Harmonious;
+                r.priority = 85;
+                r.checkRace = true;
+                r.requiredRace = CharacterRace.Elf;
+                r.checkWeapon = true;
+                r.requiredWeapon = WeaponType.LongBow;
+                r.shortStatus = "Elf Weapon Training (Proficient)";
+                r.insightNoteText = "Your Elven heritage grants natural racial proficiency with the Longbow regardless of your class!";
+            }));
+
+            // Barbarian + Great Sword
+            rules.Add(CreateOrUpdateRule("rule_barbarian_peak_fury", "Harmonious Synergy: Primal Fury", r =>
+            {
+                r.harmonyState = HarmonyState.Harmonious;
+                r.priority = 65;
+                r.checkClass = true;
+                r.requiredClass = CharacterClass.Barbarian;
+                r.checkWeapon = true;
+                r.requiredWeapon = WeaponType.GreatSword;
+                r.shortStatus = "Peak Martial Synergy";
+                r.insightNoteText = "Peak Synergy: Full Rage benefits active! Wielding a massive two-handed Great Sword empowers Reckless Attack for devastating 2d6 slashing damage.";
+            }));
+
+            // Fighter + Great Sword
+            rules.Add(CreateOrUpdateRule("rule_fighter_greatsword", "Harmonious Synergy: Peak Martial Mastery", r =>
+            {
+                r.harmonyState = HarmonyState.Harmonious;
+                r.priority = 65;
+                r.checkClass = true;
+                r.requiredClass = CharacterClass.Fighter;
+                r.checkWeapon = true;
+                r.requiredWeapon = WeaponType.GreatSword;
+                r.shortStatus = "Peak Martial Mastery";
+                r.insightNoteText = "Two-handed heavy weapon mastery synergizes with Great Weapon Fighting style and Action Surge for overwhelming melee offense!";
+            }));
+
+            // Paladin + Great Sword
+            rules.Add(CreateOrUpdateRule("rule_paladin_greatsword", "Harmonious Synergy: Divine Smite Juggernaut", r =>
+            {
+                r.harmonyState = HarmonyState.Harmonious;
+                r.priority = 65;
+                r.checkClass = true;
+                r.requiredClass = CharacterClass.Paladin;
+                r.checkWeapon = true;
+                r.requiredWeapon = WeaponType.GreatSword;
+                r.shortStatus = "Divine Smite Juggernaut";
+                r.insightNoteText = "Delivers massive two-handed weapon damage to maximize the impact of your divine smites in close-quarters combat!";
+            }));
+
+            // Ranger + Long Bow
+            rules.Add(CreateOrUpdateRule("rule_ranger_longbow", "Harmonious Synergy: Master Archer", r =>
+            {
+                r.harmonyState = HarmonyState.Harmonious;
+                r.priority = 60;
+                r.checkClass = true;
+                r.requiredClass = CharacterClass.Ranger;
+                r.checkWeapon = true;
+                r.requiredWeapon = WeaponType.LongBow;
+                r.shortStatus = "Deadly Ranged Accuracy";
+                r.insightNoteText = "The Long Bow grants unmatched range and 1d8 piercing damage, synergizing with your Archery fighting style and hunter's mark!";
+            }));
+
+            // Fighter + Long Bow
+            rules.Add(CreateOrUpdateRule("rule_fighter_longbow", "Harmonious Synergy: Master Sharpshooter", r =>
+            {
+                r.harmonyState = HarmonyState.Harmonious;
+                r.priority = 60;
+                r.checkClass = true;
+                r.requiredClass = CharacterClass.Fighter;
+                r.checkWeapon = true;
+                r.requiredWeapon = WeaponType.LongBow;
+                r.shortStatus = "Master Sharpshooter";
+                r.insightNoteText = "Full martial weapon proficiency enables long-range bombardment with multiple attacks per turn!";
+            }));
+
+            // Rogue + Dagger
             rules.Add(CreateOrUpdateRule("rule_rogue_dagger", "Harmonious Synergy: Sneak Attack", r =>
             {
                 r.harmonyState = HarmonyState.Harmonious;
-                r.priority = 55;
+                r.priority = 60;
                 r.checkClass = true;
                 r.requiredClass = CharacterClass.Rogue;
                 r.checkWeapon = true;
@@ -986,17 +1529,65 @@ namespace DNDBeyond.Editor
                 r.insightNoteText = "Daggers possess the Finesse property, qualifying for your deadly Sneak Attack extra damage!";
             }));
 
-            // Wizard + Arcane Staff Synergy
-            rules.Add(CreateOrUpdateRule("rule_wizard_arcane_staff", "Harmonious Synergy: Arcane Focus", r =>
+            // Staff Synergies for Casters & Monk
+            rules.Add(CreateOrUpdateRule("rule_wizard_staff", "Harmonious Synergy: Arcane Focus", r =>
             {
                 r.harmonyState = HarmonyState.Harmonious;
-                r.priority = 50;
+                r.priority = 55;
                 r.checkClass = true;
                 r.requiredClass = CharacterClass.Wizard;
                 r.checkWeapon = true;
-                r.requiredWeapon = WeaponType.ArcaneStaff;
+                r.requiredWeapon = WeaponType.Staff;
                 r.shortStatus = "Spellcasting Focus Attuned";
                 r.insightNoteText = "Your quarterstaff doubles as an Arcane Focus, channeling spells cleanly without needing a material component pouch.";
+            }));
+
+            rules.Add(CreateOrUpdateRule("rule_sorcerer_staff", "Harmonious Synergy: Arcane Focus", r =>
+            {
+                r.harmonyState = HarmonyState.Harmonious;
+                r.priority = 55;
+                r.checkClass = true;
+                r.requiredClass = CharacterClass.Sorcerer;
+                r.checkWeapon = true;
+                r.requiredWeapon = WeaponType.Staff;
+                r.shortStatus = "Arcane Focus Attuned";
+                r.insightNoteText = "Your quarterstaff serves as an arcane focus, channeling wild innate magic into focused spells.";
+            }));
+
+            rules.Add(CreateOrUpdateRule("rule_warlock_staff", "Harmonious Synergy: Pact Focus", r =>
+            {
+                r.harmonyState = HarmonyState.Harmonious;
+                r.priority = 55;
+                r.checkClass = true;
+                r.requiredClass = CharacterClass.Warlock;
+                r.checkWeapon = true;
+                r.requiredWeapon = WeaponType.Staff;
+                r.shortStatus = "Pact Focus Attuned";
+                r.insightNoteText = "Your staff channels eldritch energy directly from your otherworldly patron.";
+            }));
+
+            rules.Add(CreateOrUpdateRule("rule_druid_staff", "Harmonious Synergy: Nature Focus", r =>
+            {
+                r.harmonyState = HarmonyState.Harmonious;
+                r.priority = 55;
+                r.checkClass = true;
+                r.requiredClass = CharacterClass.Druid;
+                r.checkWeapon = true;
+                r.requiredWeapon = WeaponType.Staff;
+                r.shortStatus = "Druidic Focus & Shillelagh";
+                r.insightNoteText = "A wooden staff serves as a druidic focus and can be empowered with the Shillelagh cantrip for magical melee strikes.";
+            }));
+
+            rules.Add(CreateOrUpdateRule("rule_monk_staff", "Harmonious Synergy: Monk Weapon", r =>
+            {
+                r.harmonyState = HarmonyState.Harmonious;
+                r.priority = 55;
+                r.checkClass = true;
+                r.requiredClass = CharacterClass.Monk;
+                r.checkWeapon = true;
+                r.requiredWeapon = WeaponType.Staff;
+                r.shortStatus = "Dedicated Monk Weapon";
+                r.insightNoteText = "The quarterstaff is a versatile monk weapon, scaling with your Martial Arts die and allowing fluid two-handed strikes!";
             }));
 
             return rules;
@@ -1038,53 +1629,86 @@ namespace DNDBeyond.Editor
             cam.transform.position = new Vector3(0, 0, -10f);
         }
 
+        private static void SetupSceneBackground()
+        {
+            GameObject bgGO = GameObject.Find("SceneBackground");
+            if (bgGO == null)
+            {
+                bgGO = new GameObject("SceneBackground");
+            }
+            bgGO.transform.position = new Vector3(0f, 0f, 5f);
+
+            // Camera orthographic size is 5f -> camera world height is 10 units.
+            // Background sprite is 2880 x 1526 with pixelsPerUnit = 100 -> height = 15.26 units.
+            // Scale = 10f / 15.26f = 0.655308f
+            float scale = 10f / 15.26f;
+            bgGO.transform.localScale = new Vector3(scale, scale, 1f);
+
+            var sr = bgGO.GetComponent<SpriteRenderer>();
+            if (sr == null) sr = bgGO.AddComponent<SpriteRenderer>();
+            sr.sprite = LoadSubSprite("Assets/Sprites/CharacterCreater_Background.png");
+            sr.sortingOrder = -100; // Behind mannequin (orders 0-7)
+        }
+
         private static GameObject SetupMannequin()
         {
-            GameObject mannequin = GameObject.Find("ModularMannequin");
-            if (mannequin != null)
+            var scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
+            foreach (var root in scene.GetRootGameObjects())
             {
-                UnityEngine.Object.DestroyImmediate(mannequin);
+                if (root.name == "ModularMannequin")
+                {
+                    UnityEngine.Object.DestroyImmediate(root);
+                }
             }
-            mannequin = new GameObject("ModularMannequin");
+            GameObject mannequin = new GameObject("ModularMannequin");
 
-            // Position mannequin: X = -1.2 (centered between left and right UI), Y = 0.15
-            // Soles are at -2.12 in local space. With scale 1.42: soles are at Y = 0.15 + (-2.12 * 1.42) = -2.86!
-            // Pedestal localPos Y = -2.44 places the pedestal top at -2.44 + 0.32 = -2.12 (perfect flush under soles of feet at Y = -2.86!)
-            mannequin.transform.position = new Vector3(-1.2f, 0.15f, 0f);
-            mannequin.transform.localScale = new Vector3(1.42f, 1.42f, 1.42f);
+            // Position mannequin: X = -1.2 (centered between left and right UI), Y = -0.7 (comfortably below top navbar)
+            // With 1000x1600 sprites and scale 0.43: feet rest naturally on forest path, head/horns well below navbar (zero overlap)
+            mannequin.transform.position = new Vector3(-1.2f, -0.7f, 0f);
+            mannequin.transform.localScale = new Vector3(0.43f, 0.43f, 1.0f);
 
             var paperDoll = mannequin.GetComponent<PaperDollView>();
             if (paperDoll == null) paperDoll = mannequin.AddComponent<PaperDollView>();
-            paperDoll.SetBaseScale(new Vector3(1.42f, 1.42f, 1.42f));
+            paperDoll.SetBaseScale(new Vector3(0.43f, 0.43f, 1.0f));
 
-            // CRITICAL: Platform sprite localPosition = (0, -2.44, 0) places top surface directly flush under soles of feet!
-            var pedestal = GetOrCreateLayerChild(mannequin, "0_Pedestal", 0, LoadSprite("spr_pedestal"), Color.white, new Vector3(0f, -2.44f, 0f));
-            var aura = GetOrCreateLayerChild(mannequin, "1_PedestalAura", 1, LoadSprite("spr_pedestal_aura"), new Color(0.90f, 0.29f, 0.10f, 0.65f), new Vector3(0f, -2.44f, 0f));
-            aura.enabled = false; // Clean slate: no pre-attached aura
+            // Hand-drawn sprites: all SpriteRenderers at local position (0, 0, 0) with center pivot for 100% pixel-perfect alignment
+            var body = GetOrCreateLayerChild(mannequin, "10_Body", 10, LoadFinalSprite("Races/Elf"), Color.white, Vector3.zero, Vector3.one);
+            var armor = GetOrCreateLayerChild(mannequin, "20_Armor", 20, LoadFinalSprite("Armor/No Armor"), Color.white, Vector3.zero, Vector3.one);
+            var hair = GetOrCreateLayerChild(mannequin, "30_Hair", 30, LoadFinalSprite("Apperence/Hair1"), Color.white, Vector3.zero, Vector3.one);
+            var horns = GetOrCreateLayerChild(mannequin, "40_Horns", 40, LoadFinalSprite("Apperence/Horn1"), Color.white, Vector3.zero, Vector3.one); // Renders ON TOP of hair!
+            var weapon = GetOrCreateLayerChild(mannequin, "50_Weapons", 50, LoadFinalSprite("Weapons/Great Sword"), Color.white, Vector3.zero, Vector3.one);
 
-            var body = GetOrCreateLayerChild(mannequin, "2_BodyBase", 2, LoadSprite("spr_body"), new Color(0.92f, 0.85f, 0.80f), Vector3.zero);
-            var raceFeatures = GetOrCreateLayerChild(mannequin, "3_RaceFeatures", 3, LoadSprite("spr_tiefling_horns"), new Color(0.85f, 0.35f, 0.38f), Vector3.zero);
-            raceFeatures.enabled = false; // Clean slate: no pre-attached race features
+            body.enabled = false;
+            armor.enabled = false;
+            hair.enabled = false;
+            horns.enabled = false;
+            weapon.enabled = false;
 
-            var clothes = GetOrCreateLayerChild(mannequin, "4_Clothes", 4, LoadSprite("spr_clothes"), Color.white, Vector3.zero);
-            var armor = GetOrCreateLayerChild(mannequin, "5_ArmorOverlay", 5, LoadSprite("spr_armor_heavy"), Color.white, Vector3.zero);
-            armor.enabled = false; // Clean slate: no pre-attached armor
+            paperDoll.AssignRenderers(body, armor, hair, horns, weapon);
 
-            var hair = GetOrCreateLayerChild(mannequin, "6_Hair", 6, LoadSprite("spr_hair"), Color.white, Vector3.zero);
-            var weapon = GetOrCreateLayerChild(mannequin, "7_Weapon", 7, LoadSprite("spr_weapon_greataxe"), Color.white, Vector3.zero);
-            weapon.enabled = false; // Clean slate: no pre-attached weapon
+            var audioSource = mannequin.GetComponent<AudioSource>();
+            if (audioSource == null) audioSource = mannequin.AddComponent<AudioSource>();
+            audioSource.playOnAwake = false;
+            audioSource.spatialBlend = 0f;
 
-            paperDoll.AssignRenderers(pedestal, aura, body, raceFeatures, clothes, armor, hair, weapon);
+            var clothesClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sound/Clothes Apply.wav");
+            var metalClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sound/Metal Armor.mp3");
+            var weaponClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sound/Weapon Equip.mp3");
+            paperDoll.AssignAudio(audioSource, clothesClip, metalClip, weaponClip);
+
+            // Empty Center Stage Startup: hidden/inactive at launch until first choice is made
+            mannequin.SetActive(false);
 
             return mannequin;
         }
 
-        private static SpriteRenderer GetOrCreateLayerChild(GameObject parent, string name, int order, Sprite sprite, Color color, Vector3 localPos)
+        private static SpriteRenderer GetOrCreateLayerChild(GameObject parent, string name, int order, Sprite sprite, Color color, Vector3 localPos, Vector3 localScale)
         {
             Transform childTr = parent.transform.Find(name);
             GameObject go = childTr != null ? childTr.gameObject : new GameObject(name);
             go.transform.SetParent(parent.transform, false);
             go.transform.localPosition = localPos;
+            go.transform.localScale = localScale;
 
             var sr = go.GetComponent<SpriteRenderer>();
             if (sr == null) sr = go.AddComponent<SpriteRenderer>();
@@ -1114,13 +1738,17 @@ namespace DNDBeyond.Editor
 
         private static void SetupCanvas(GameObject mannequinObj)
         {
-            GameObject canvasGO = GameObject.Find("MainCanvas");
-            if (canvasGO != null)
+            var scene = UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene();
+            foreach (var root in scene.GetRootGameObjects())
             {
-                UnityEngine.Object.DestroyImmediate(canvasGO);
+                if (root.name == "MainCanvas")
+                {
+                    UnityEngine.Object.DestroyImmediate(root);
+                }
             }
 
-            canvasGO = new GameObject("MainCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+            GameObject canvasGO = new GameObject("MainCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+            UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(canvasGO, scene);
             var canvas = canvasGO.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
 
@@ -1128,6 +1756,7 @@ namespace DNDBeyond.Editor
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1920, 1080);
             scaler.matchWidthOrHeight = 0.5f;
+            scaler.dynamicPixelsPerUnit = 10f;
 
             var manager = canvasGO.AddComponent<CharacterCustomizerManager>();
             var evaluator = canvasGO.AddComponent<RuleHarmonyEvaluator>();
@@ -1153,19 +1782,22 @@ namespace DNDBeyond.Editor
             evaluator.SetRules(ruleList);
 
             // Clean-Slate Startup: Player begins with empty canvas (0/4 Choices Made)
+            manager.SetMannequinRoot(mannequinObj);
             manager.CurrentBuild.currentRace = null;
             manager.CurrentBuild.currentClass = null;
             manager.CurrentBuild.currentArmor = null;
             manager.CurrentBuild.currentWeapon = null;
+            manager.CurrentBuild.currentHair = null;
+            manager.CurrentBuild.currentHorns = null;
 
             Sprite boxSprite = LoadSprite("spr_box_white");
             Sprite d20Sprite = LoadSprite("spr_d20");
             Sprite cardSprite = LoadSprite("spr_card_frame");
 
-            // 1. Header
-            CreateHeader(canvasGO.transform, boxSprite);
+            // 1. Back to Methods Button (Independent pill button, NO redundant header panel)
+            CreateBackToMethodsButton(canvasGO.transform, cardSprite);
 
-            // 2. Top-Left: D20 + Rule Quirk Card
+            // 2. Top-Left: D20 + Rule Quirk Card (safely below Y = 970 navbar)
             CreateTopLeftD20AndNote(canvasGO.transform, boxSprite, d20Sprite, cardSprite);
 
             // 3. Bottom-Left: Mini Character Sheet (VerticalLayoutGroup, no overlap)
@@ -1174,45 +1806,56 @@ namespace DNDBeyond.Editor
             // 4. Center Drop Zone
             CreateCenterDropZone(canvasGO.transform, boxSprite);
 
-            // 5. Drawer Item Prefab (horizontal row for 460px menu)
+            // 5. Drawer Item Prefab (horizontal row for 490px menu)
             GameObject drawerItemPrefab = CreateDrawerItemPrefab(cardSprite, boxSprite);
 
-            // 6. Right-Side Thick Menu (Width: 460px) with Two-Level Drill-Down Navigation
+            // 6. Right-Side Thick Menu (Width: 490px, inset 40px from right: X = 1370 to 1860, top below 970)
             CreateRightSideMenu(canvasGO.transform, boxSprite, cardSprite, drawerItemPrefab);
 
             // 7. Export Modal Overlay
             CreateExportModal(canvasGO.transform, boxSprite, cardSprite);
         }
 
-        private static void CreateHeader(Transform canvasTr, Sprite boxSprite)
+        private static void CreateBackToMethodsButton(Transform canvasTr, Sprite cardSprite)
         {
-            GameObject header = new GameObject("HeaderPanel", typeof(RectTransform), typeof(Image));
-            header.transform.SetParent(canvasTr, false);
-            var rect = header.GetComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0f, 1f);
-            rect.anchorMax = new Vector2(1f, 1f);
-            rect.pivot = new Vector2(0.5f, 1f);
-            rect.anchoredPosition = Vector2.zero;
-            rect.sizeDelta = new Vector2(0, 60);
+            GameObject backBtnGO = new GameObject("BackToMethodsButton", typeof(RectTransform), typeof(Image), typeof(Button), typeof(ReturnToMenuButton));
+            backBtnGO.transform.SetParent(canvasTr, false);
+            var bRect = backBtnGO.GetComponent<RectTransform>();
+            bRect.anchorMin = new Vector2(0f, 1f);
+            bRect.anchorMax = new Vector2(0f, 1f);
+            bRect.pivot = new Vector2(0f, 1f);
+            bRect.anchoredPosition = new Vector2(40f, -115f); // Top sits at Y = 965, safely below Y = 970 navbar!
+            bRect.sizeDelta = new Vector2(175f, 36f);
 
-            var img = header.GetComponent<Image>();
-            img.sprite = boxSprite;
-            img.type = Image.Type.Sliced;
-            img.color = new Color(0.09f, 0.09f, 0.10f, 1f); // D&D Beyond dark banner
+            var bImg = backBtnGO.GetComponent<Image>();
+            bImg.sprite = cardSprite;
+            bImg.type = Image.Type.Sliced;
+            bImg.color = Color.white; // Crisp white rounded card
+            var btn = backBtnGO.GetComponent<Button>();
+            var colors = btn.colors;
+            colors.normalColor = Color.white;
+            colors.highlightedColor = new Color(0.94f, 0.95f, 0.97f, 1f);
+            colors.pressedColor = new Color(0.88f, 0.90f, 0.93f, 1f);
+            btn.colors = colors;
 
-            GameObject titleGO = new GameObject("TitleText", typeof(RectTransform), typeof(TextMeshProUGUI));
-            titleGO.transform.SetParent(header.transform, false);
-            var tr = titleGO.GetComponent<RectTransform>();
-            tr.anchorMin = Vector2.zero;
-            tr.anchorMax = Vector2.one;
-            tr.sizeDelta = Vector2.zero;
+            GameObject backLabelGO = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
+            backLabelGO.transform.SetParent(backBtnGO.transform, false);
+            var blRect = backLabelGO.GetComponent<RectTransform>();
+            blRect.anchorMin = Vector2.zero;
+            blRect.anchorMax = Vector2.one;
+            blRect.sizeDelta = Vector2.zero;
 
-            var tmp = titleGO.GetComponent<TextMeshProUGUI>();
-            tmp.text = "<b><color=#E03B3B>D&D</color> BEYOND</b>  |  VISUAL CHARACTER BUILDER";
-            tmp.fontSize = 26;
-            tmp.fontStyle = FontStyles.Bold;
-            tmp.alignment = TextAlignmentOptions.Center;
-            tmp.color = Color.white;
+            var blTmp = backLabelGO.GetComponent<TextMeshProUGUI>();
+            blTmp.text = "<b>< Back to Methods</b>";
+            blTmp.fontSize = 14;
+            blTmp.fontStyle = FontStyles.Bold;
+            blTmp.alignment = TextAlignmentOptions.Center;
+            blTmp.color = new Color(0.14f, 0.15f, 0.17f, 1f); // #242527
+            blTmp.raycastTarget = false;
+
+            var returnComp = backBtnGO.GetComponent<ReturnToMenuButton>();
+            var clickClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sound/UI_Click.wav");
+            returnComp.Setup(clickClip, "MainMenu", 0);
         }
 
         private static void CreateTopLeftD20AndNote(Transform canvasTr, Sprite boxSprite, Sprite d20Sprite, Sprite cardSprite)
@@ -1223,7 +1866,7 @@ namespace DNDBeyond.Editor
             rect.anchorMin = new Vector2(0f, 1f);
             rect.anchorMax = new Vector2(0f, 1f);
             rect.pivot = new Vector2(0f, 1f);
-            rect.anchoredPosition = new Vector2(30, -75);
+            rect.anchoredPosition = new Vector2(40f, -160f); // Sits at Y = 920, safely below Y = 970 navbar!
             rect.sizeDelta = new Vector2(400, 480);
 
             var harmonyUI = d20Container.AddComponent<D20HarmonyUI>();
@@ -1305,7 +1948,7 @@ namespace DNDBeyond.Editor
             nRect.anchorMin = new Vector2(0f, 1f);
             nRect.anchorMax = new Vector2(0f, 1f);
             nRect.pivot = new Vector2(0f, 1f);
-            nRect.anchoredPosition = new Vector2(0, -95);
+            nRect.anchoredPosition = new Vector2(-430, -95);
             nRect.sizeDelta = new Vector2(390, 240);
 
             var nImg = noteCard.GetComponent<Image>();
@@ -1313,6 +1956,10 @@ namespace DNDBeyond.Editor
             nImg.type = Image.Type.Sliced;
             nImg.color = Color.white; // Crisp white card
             var cg = noteCard.GetComponent<CanvasGroup>();
+            cg.alpha = 0f;
+            cg.interactable = false;
+            cg.blocksRaycasts = false;
+            noteCard.SetActive(false);
 
             // Rule Quirk Tag (15pt bold red)
             GameObject tagGO = new GameObject("TagText", typeof(RectTransform), typeof(TextMeshProUGUI));
@@ -1403,7 +2050,7 @@ namespace DNDBeyond.Editor
             rect.anchorMin = new Vector2(0f, 0f);
             rect.anchorMax = new Vector2(0f, 0f);
             rect.pivot = new Vector2(0f, 0f);
-            rect.anchoredPosition = new Vector2(30, 30);
+            rect.anchoredPosition = new Vector2(40f, 30f);
             rect.sizeDelta = new Vector2(390, 345);
 
             var img = sheetPanel.GetComponent<Image>();
@@ -1485,6 +2132,12 @@ namespace DNDBeyond.Editor
             SetPrivateField(miniUI, "weaponChipText", weaponChip);
             SetPrivateField(miniUI, "totalAcText", acTmp);
             SetPrivateField(miniUI, "adventureReadyText", readyTmp);
+
+            var miniAudio = sheetPanel.AddComponent<AudioSource>();
+            miniAudio.playOnAwake = false;
+            var questCompleteClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Sound/Quest_Complete.wav");
+            SetPrivateField(miniUI, "audioSource", miniAudio);
+            SetPrivateField(miniUI, "fanfareClip", questCompleteClip);
         }
 
         private static TextMeshProUGUI CreateSheetRow(Transform parent, Sprite boxSprite, string text)
@@ -1546,7 +2199,7 @@ namespace DNDBeyond.Editor
 
             GameObject go = new GameObject("DrawerItemView", typeof(RectTransform), typeof(Image), typeof(Button), typeof(ItemDragHandler), typeof(DrawerItemView));
             var rect = go.GetComponent<RectTransform>();
-            rect.sizeDelta = new Vector2(468, 86);
+            rect.sizeDelta = new Vector2(448, 86);
 
             var img = go.GetComponent<Image>();
             img.sprite = cardSprite;
@@ -1661,15 +2314,15 @@ namespace DNDBeyond.Editor
 
         private static void CreateRightSideMenu(Transform canvasTr, Sprite boxSprite, Sprite cardSprite, GameObject drawerItemPrefab)
         {
-            // Thick Category Menu Column (Width: 510px — 10% wider for breathing room!)
+            // Category Menu Column (Width: 490px, inset 40px from right browser scrollbar: X = 1370 to 1860, top below Y = 970)
             GameObject rightColumn = new GameObject("RightSidePanel", typeof(RectTransform), typeof(Image), typeof(CategoryDrawerUI));
             rightColumn.transform.SetParent(canvasTr, false);
             var rcRect = rightColumn.GetComponent<RectTransform>();
             rcRect.anchorMin = new Vector2(1f, 0f);
             rcRect.anchorMax = new Vector2(1f, 1f);
-            rcRect.pivot = new Vector2(1f, 0.5f);
-            rcRect.anchoredPosition = new Vector2(-15, 0);
-            rcRect.sizeDelta = new Vector2(510, 0);
+            rcRect.pivot = new Vector2(1f, 1f);
+            rcRect.anchoredPosition = new Vector2(-60f, -110f); // Inset 60px from right (1920 - 60 = 1860), top below 970 (1080 - 110 = 970)
+            rcRect.sizeDelta = new Vector2(490f, -135f); // Width 490px (1860 - 490 = 1370), bottom padding 25px
 
             var rcImg = rightColumn.GetComponent<Image>();
             rcImg.sprite = boxSprite;
@@ -1687,7 +2340,7 @@ namespace DNDBeyond.Editor
             mcRect.anchorMin = new Vector2(0f, 0f);
             mcRect.anchorMax = new Vector2(1f, 1f);
             mcRect.offsetMin = new Vector2(16, 75);
-            mcRect.offsetMax = new Vector2(-16, -70);
+            mcRect.offsetMax = new Vector2(-16, -16);
 
             // Title
             GameObject titleGO = new GameObject("MainTitle", typeof(RectTransform), typeof(TextMeshProUGUI));
@@ -1713,7 +2366,7 @@ namespace DNDBeyond.Editor
             bcRect.offsetMax = new Vector2(0, -60);
 
             var bvlg = buttonsContainer.GetComponent<VerticalLayoutGroup>();
-            bvlg.spacing = 14;
+            bvlg.spacing = 10;
             bvlg.childControlWidth = true;
             bvlg.childControlHeight = false;
             bvlg.childForceExpandWidth = true;
@@ -1723,6 +2376,7 @@ namespace DNDBeyond.Editor
             var (classBtn, classLabel) = CreateCategoryButton(buttonsContainer.transform, boxSprite, cardSprite, "2. Class", "Current: (None chosen)");
             var (armorBtn, armorLabel) = CreateCategoryButton(buttonsContainer.transform, boxSprite, cardSprite, "3. Armor & Attire", "Current: (None chosen)");
             var (weaponBtn, weaponLabel) = CreateCategoryButton(buttonsContainer.transform, boxSprite, cardSprite, "4. Weapons", "Current: (None chosen)");
+            var (appearanceBtn, appearanceLabel) = CreateCategoryButton(buttonsContainer.transform, boxSprite, cardSprite, "5. Appearance", "Current: (Default)");
 
             // -------------------------------------------------------------
             // LEVEL 2: Subcategory View (Drill-Down)
@@ -1733,7 +2387,7 @@ namespace DNDBeyond.Editor
             scRect.anchorMin = new Vector2(0f, 0f);
             scRect.anchorMax = new Vector2(1f, 1f);
             scRect.offsetMin = new Vector2(16, 75);
-            scRect.offsetMax = new Vector2(-16, -70);
+            scRect.offsetMax = new Vector2(-16, -16);
 
             // Top Bar: Back button + Title
             GameObject topBar = new GameObject("TopBar", typeof(RectTransform));
@@ -1842,6 +2496,7 @@ namespace DNDBeyond.Editor
                 classBtn, classLabel,
                 armorBtn, armorLabel,
                 weaponBtn, weaponLabel,
+                appearanceBtn, appearanceLabel,
                 subcategoryPanel,
                 backBtn,
                 stTmp,
@@ -1857,7 +2512,7 @@ namespace DNDBeyond.Editor
             GameObject btnGO = new GameObject("Category_" + title, typeof(RectTransform), typeof(Image), typeof(Button));
             btnGO.transform.SetParent(parent, false);
             var rect = btnGO.GetComponent<RectTransform>();
-            rect.sizeDelta = new Vector2(0, 92);
+            rect.sizeDelta = new Vector2(0, 78);
 
             var img = btnGO.GetComponent<Image>();
             img.sprite = cardSprite;
@@ -1865,33 +2520,33 @@ namespace DNDBeyond.Editor
             img.color = Color.white; // Crisp white card
             var btn = btnGO.GetComponent<Button>();
 
-            // Title (20pt bold, dark charcoal)
+            // Title (18pt bold, dark charcoal)
             GameObject titleGO = new GameObject("Title", typeof(RectTransform), typeof(TextMeshProUGUI));
             titleGO.transform.SetParent(btnGO.transform, false);
             var tRect = titleGO.GetComponent<RectTransform>();
             tRect.anchorMin = new Vector2(0f, 0.5f);
             tRect.anchorMax = new Vector2(1f, 1f);
             tRect.pivot = new Vector2(0f, 1f);
-            tRect.anchoredPosition = new Vector2(18, -10);
+            tRect.anchoredPosition = new Vector2(18, -8);
             tRect.sizeDelta = new Vector2(-60, 0);
             var tTmp = titleGO.GetComponent<TextMeshProUGUI>();
             tTmp.text = $"<b>{title}</b>";
-            tTmp.fontSize = 20;
+            tTmp.fontSize = 18;
             tTmp.alignment = TextAlignmentOptions.TopLeft;
             tTmp.color = new Color(0.14f, 0.15f, 0.17f, 1f); // #242527
 
-            // Equipped Label (15pt blue)
+            // Equipped Label (14pt blue)
             GameObject eqGO = new GameObject("EquippedLabel", typeof(RectTransform), typeof(TextMeshProUGUI));
             eqGO.transform.SetParent(btnGO.transform, false);
             var eqRect = eqGO.GetComponent<RectTransform>();
             eqRect.anchorMin = new Vector2(0f, 0f);
             eqRect.anchorMax = new Vector2(1f, 0.5f);
             eqRect.pivot = new Vector2(0f, 0f);
-            eqRect.anchoredPosition = new Vector2(18, 12);
+            eqRect.anchoredPosition = new Vector2(18, 10);
             eqRect.sizeDelta = new Vector2(-60, 0);
             var eqTmp = eqGO.GetComponent<TextMeshProUGUI>();
             eqTmp.text = defaultEquipped;
-            eqTmp.fontSize = 15;
+            eqTmp.fontSize = 14;
             eqTmp.alignment = TextAlignmentOptions.BottomLeft;
             eqTmp.color = new Color(0.15f, 0.46f, 0.70f, 1f); // #2576B3 D&D blue
 

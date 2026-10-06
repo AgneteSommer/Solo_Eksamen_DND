@@ -15,7 +15,7 @@ MonoBehaviour:
   ruleId: rule_monk_unarmored
   ruleTitle: 'Harmonious Synergy: Martial Arts'
   harmonyState: 0
-  priority: 60
+  priority: 65
   checkClass: 1
   requiredClass: 6
   checkArmor: 1
@@ -24,6 +24,8 @@ MonoBehaviour:
   requiredWeapon: 0
   checkRace: 0
   requiredRace: 0
+  ignoreIfRace: 0
+  ignoredRace: 0
   shortStatus: Unarmored Defense Active (AC 15)
   insightNoteText: While unarmored, your Armor Class equals 10 + Dexterity modifier
     + Wisdom modifier (Base AC 15) and your Martial Arts mobility is fully active!

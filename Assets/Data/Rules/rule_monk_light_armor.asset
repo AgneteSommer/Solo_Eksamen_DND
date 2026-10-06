@@ -24,6 +24,8 @@ MonoBehaviour:
   requiredWeapon: 0
   checkRace: 0
   requiredRace: 0
+  ignoreIfRace: 0
+  ignoredRace: 0
   shortStatus: Martial Arts & Movement Disabled
   insightNoteText: Even light armor negates a Monk's Martial Arts and Unarmored Defense
     features!

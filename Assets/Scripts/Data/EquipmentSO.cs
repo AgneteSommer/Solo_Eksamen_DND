@@ -15,7 +15,10 @@ namespace DNDBeyond.Data
         None,
         Greataxe,
         ArcaneStaff,
-        Dagger
+        Dagger,
+        GreatSword,
+        LongBow,
+        Staff
     }
 
     [CreateAssetMenu(fileName = "NewEquipment", menuName = "DND/Equipment")]

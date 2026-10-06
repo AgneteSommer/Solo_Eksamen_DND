@@ -13,13 +13,14 @@ MonoBehaviour:
   m_Name: armor_light
   m_EditorClassIdentifier: Assembly-CSharp::DNDBeyond.Data.EquipmentSO
   id: armor_light
-  displayName: Leather Armor
+  displayName: Light Armor
   category: 2
   raceType: 0
   classType: 0
-  icon: {fileID: 21300000, guid: e3d7b712d323e704e81996bbf42996a0, type: 3}
-  mannequinSprite: {fileID: 21300000, guid: e3d7b712d323e704e81996bbf42996a0, type: 3}
-  primaryColor: {r: 0.55, g: 0.35, b: 0.2, a: 1}
+  appearanceSlot: 0
+  icon: {fileID: 21300000, guid: ff177ffbf15f47144b93c292572380b0, type: 3}
+  mannequinSprite: {fileID: 21300000, guid: ff177ffbf15f47144b93c292572380b0, type: 3}
+  primaryColor: {r: 1, g: 1, b: 1, a: 1}
   secondaryColor: {r: 1, g: 1, b: 1, a: 1}
   flavorTagline: Light Armor (AC 11 + Full DEX)
   description: Supple molded leather offering protection without impeding agility

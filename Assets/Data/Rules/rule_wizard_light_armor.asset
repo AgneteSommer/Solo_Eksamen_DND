@@ -15,7 +15,7 @@ MonoBehaviour:
   ruleId: rule_wizard_light_armor
   ruleTitle: 'Rule Quirk: Non-Proficient Armor'
   harmonyState: 1
-  priority: 85
+  priority: 90
   checkClass: 1
   requiredClass: 12
   checkArmor: 1
@@ -24,6 +24,8 @@ MonoBehaviour:
   requiredWeapon: 0
   checkRace: 0
   requiredRace: 0
+  ignoreIfRace: 0
+  ignoredRace: 0
   shortStatus: Spellcasting Blocked
   insightNoteText: Standard Wizards lack Light Armor proficiency. You cannot cast
     spells while wearing armor you are not proficient with!

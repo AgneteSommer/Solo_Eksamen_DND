@@ -14,6 +14,11 @@ namespace DNDBeyond.UI
         [SerializeField] private TextMeshProUGUI totalAcText;
         [SerializeField] private TextMeshProUGUI adventureReadyText;
 
+        [Header("Celebration Audio")]
+        [SerializeField] private AudioSource audioSource;
+        [SerializeField] private AudioClip fanfareClip;
+        private bool hasCelebrated = false;
+
         private void Start()
         {
             if (CharacterCustomizerManager.Instance != null)
@@ -93,10 +98,19 @@ namespace DNDBeyond.UI
                 if (readyCount == 4)
                 {
                     adventureReadyText.text = "<b><color=#B45309>⭐ Adventure Ready! (4/4)</color></b>";
+                    if (!hasCelebrated)
+                    {
+                        if (audioSource != null && fanfareClip != null)
+                        {
+                            audioSource.PlayOneShot(fanfareClip);
+                        }
+                        hasCelebrated = true;
+                    }
                 }
                 else
                 {
                     adventureReadyText.text = $"<color=#718096>Quest Checklist: ({readyCount}/4 Complete)</color>";
+                    hasCelebrated = false;
                 }
             }
         }

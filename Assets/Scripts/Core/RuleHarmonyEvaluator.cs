@@ -29,14 +29,14 @@ namespace DNDBeyond.Core
 
         public HarmonyEvaluationResult Evaluate(CharacterBuild build)
         {
-            if (build == null)
+            if (build == null || build.ClassType == CharacterClass.None)
             {
                 return new HarmonyEvaluationResult
                 {
                     state = HarmonyState.Harmonious,
-                    title = "Character Creation",
-                    shortStatus = "Select Options",
-                    insightNote = "Choose your Race, Class, Armor, and Weapon from the drawer below.",
+                    title = "Synergy",
+                    shortStatus = "Balanced Synergy",
+                    insightNote = "Balanced Synergy — As you select your Class, Armor, and Weapons, your proficiencies and quirks will appear here.",
                     matchedRule = null
                 };
             }
@@ -65,6 +65,19 @@ namespace DNDBeyond.Core
 
             if (bestMatch != null)
             {
+                // Safety guard: Quirks can NEVER trigger if a class has not yet been selected
+                if (bestMatch.IsQuirk && charClass == CharacterClass.None)
+                {
+                    return new HarmonyEvaluationResult
+                    {
+                        state = HarmonyState.Harmonious,
+                        title = "Synergy",
+                        shortStatus = "Balanced Synergy",
+                        insightNote = "Balanced Synergy — As you select your Class, Armor, and Weapons, your proficiencies and quirks will appear here.",
+                        matchedRule = null
+                    };
+                }
+
                 return new HarmonyEvaluationResult
                 {
                     state = bestMatch.harmonyState,
@@ -79,8 +92,8 @@ namespace DNDBeyond.Core
             return new HarmonyEvaluationResult
             {
                 state = HarmonyState.Harmonious,
-                title = "Balanced Synergy",
-                shortStatus = "Harmonious Build",
+                title = "Synergy",
+                shortStatus = "Balanced Synergy",
                 insightNote = "This equipment setup functions naturally within standard 5e rules.",
                 matchedRule = null
             };

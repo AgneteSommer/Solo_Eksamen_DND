@@ -15,7 +15,7 @@ MonoBehaviour:
   ruleId: rule_rogue_dagger
   ruleTitle: 'Harmonious Synergy: Sneak Attack'
   harmonyState: 0
-  priority: 55
+  priority: 60
   checkClass: 1
   requiredClass: 9
   checkArmor: 0
@@ -24,6 +24,8 @@ MonoBehaviour:
   requiredWeapon: 3
   checkRace: 0
   requiredRace: 0
+  ignoreIfRace: 0
+  ignoredRace: 0
   shortStatus: Finesse Sneak Attack Ready
   insightNoteText: Daggers possess the Finesse property, qualifying for your deadly
     Sneak Attack extra damage!

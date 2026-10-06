@@ -15,7 +15,7 @@ MonoBehaviour:
   ruleId: rule_fighter_heavy_armor
   ruleTitle: 'Harmonious Synergy: Frontline Master'
   harmonyState: 0
-  priority: 65
+  priority: 70
   checkClass: 1
   requiredClass: 5
   checkArmor: 1
@@ -24,6 +24,8 @@ MonoBehaviour:
   requiredWeapon: 0
   checkRace: 0
   requiredRace: 0
-  shortStatus: Master of Heavy Armor (AC 18)
+  ignoreIfRace: 0
+  ignoredRace: 0
+  shortStatus: Full Heavy Armor Mastery (AC 18)
   insightNoteText: Full Heavy Armor proficiency grants maximum protection (AC 18),
     allowing you to hold the frontline with unmatched resilience!

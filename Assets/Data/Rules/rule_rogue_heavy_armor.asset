@@ -15,7 +15,7 @@ MonoBehaviour:
   ruleId: rule_rogue_heavy_armor
   ruleTitle: 'Rule Quirk: Stealth Disadvantage'
   harmonyState: 1
-  priority: 90
+  priority: 100
   checkClass: 1
   requiredClass: 9
   checkArmor: 1
@@ -24,6 +24,8 @@ MonoBehaviour:
   requiredWeapon: 0
   checkRace: 0
   requiredRace: 0
+  ignoreIfRace: 0
+  ignoredRace: 0
   shortStatus: Stealth Disadvantage & Attack Penalties
   insightNoteText: Rogues lack heavy armor proficiency. It imposes disadvantage on
     Dexterity ability checks (including Stealth) and attack rolls!

@@ -7,40 +7,41 @@ namespace DNDBeyond.Core
 {
     public class PaperDollView : MonoBehaviour
     {
-        [Header("Layer Sprite Renderers (0 to 7)")]
-        [SerializeField] private SpriteRenderer pedestalRenderer;
-        [SerializeField] private SpriteRenderer pedestalAuraRenderer;
-        [SerializeField] private SpriteRenderer bodyRenderer;
-        [SerializeField] private SpriteRenderer raceFeaturesRenderer;
-        [SerializeField] private SpriteRenderer clothesRenderer;
-        [SerializeField] private SpriteRenderer armorRenderer;
-        [SerializeField] private SpriteRenderer hairRenderer;
-        [SerializeField] private SpriteRenderer weaponRenderer;
+        [Header("Layer Sprite Renderers")]
+        [SerializeField] private SpriteRenderer bodyRenderer;           // Order 10 (Elf / Tiefling)
+        [SerializeField] private SpriteRenderer armorRenderer;          // Order 20 (No Armor / Light / Medium / Heavy)
+        [SerializeField] private SpriteRenderer hairRenderer;           // Order 30 (Hair 1 / Hair 2)
+        [SerializeField] private SpriteRenderer hornsRenderer;          // Order 40 (Horn 1 - Renders on top of Hair!)
+        [SerializeField] private SpriteRenderer weaponRenderer;         // Order 50 (Daggers / Great Sword / Long Bow / Staff)
 
-        [Header("Default Base Sprites")]
-        [SerializeField] private Sprite defaultBodySprite;
-        [SerializeField] private Sprite defaultClothesSprite;
-        [SerializeField] private Sprite defaultPedestalSprite;
-        [SerializeField] private Sprite defaultHairSprite;
-
-        [Header("Race Palette (Skin Tints)")]
-        [SerializeField] private Color elfSkinTint = new Color(0.96f, 0.88f, 0.82f);
-        [SerializeField] private Color tieflingSkinTint = new Color(0.85f, 0.35f, 0.38f);
-        [SerializeField] private Color neutralSkinTint = new Color(0.92f, 0.85f, 0.80f);
-
-        [Header("Class Aura Colors")]
-        [SerializeField] private Color barbarianAura = new Color(0.95f, 0.3f, 0.15f, 0.6f);
-        [SerializeField] private Color wizardAura = new Color(0.2f, 0.6f, 1.0f, 0.6f);
-        [SerializeField] private Color neutralAura = new Color(0.5f, 0.5f, 0.5f, 0.2f);
+        [Header("Audio Feedback")]
+        [SerializeField] private AudioSource audioSource;
+        [SerializeField] private AudioClip clothesApplySound;
+        [SerializeField] private AudioClip metalArmorSound;
+        [SerializeField] private AudioClip weaponEquipSound;
 
         private Coroutine punchCoroutine;
-        private Vector3 baseScale = new Vector3(1.42f, 1.42f, 1.42f);
+        private Vector3 baseScale = new Vector3(0.43f, 0.43f, 1.0f);
+        private EquipmentSO lastArmor;
+        private EquipmentSO lastWeapon;
+        private bool isInitialUpdate = true;
 
         private void Awake()
         {
             if (transform.localScale != Vector3.one)
             {
                 baseScale = transform.localScale;
+            }
+
+            if (audioSource == null)
+            {
+                audioSource = GetComponent<AudioSource>();
+                if (audioSource == null)
+                {
+                    audioSource = gameObject.AddComponent<AudioSource>();
+                    audioSource.playOnAwake = false;
+                    audioSource.spatialBlend = 0f; // 2D sound
+                }
             }
         }
 
@@ -50,16 +51,17 @@ namespace DNDBeyond.Core
             transform.localScale = scale;
         }
 
-        private void Start()
+        private void OnEnable()
         {
             if (CharacterCustomizerManager.Instance != null)
             {
+                CharacterCustomizerManager.Instance.OnCharacterUpdated -= UpdateVisuals;
                 CharacterCustomizerManager.Instance.OnCharacterUpdated += UpdateVisuals;
                 UpdateVisuals(CharacterCustomizerManager.Instance.CurrentBuild);
             }
         }
 
-        private void OnDestroy()
+        private void OnDisable()
         {
             if (CharacterCustomizerManager.Instance != null)
             {
@@ -71,94 +73,116 @@ namespace DNDBeyond.Core
         {
             if (build == null) return;
 
-            // 1. Race Features & Skin Tint
-            if (build.currentRace != null)
+            // Audio equip feedback triggers
+            if (!isInitialUpdate)
             {
-                if (build.RaceType == CharacterRace.Elf)
+                if (build.currentArmor != lastArmor && build.currentArmor != null)
                 {
-                    if (bodyRenderer != null) bodyRenderer.color = elfSkinTint;
-                    if (raceFeaturesRenderer != null)
+                    if (build.currentArmor.armorType == ArmorType.None || build.currentArmor.armorType == ArmorType.Light)
                     {
-                        raceFeaturesRenderer.sprite = build.currentRace.mannequinSprite;
-                        raceFeaturesRenderer.color = build.currentRace.primaryColor;
-                        raceFeaturesRenderer.enabled = raceFeaturesRenderer.sprite != null;
+                        PlaySound(clothesApplySound);
+                    }
+                    else if (build.currentArmor.armorType == ArmorType.Medium || build.currentArmor.armorType == ArmorType.Heavy)
+                    {
+                        PlaySound(metalArmorSound);
                     }
                 }
-                else if (build.RaceType == CharacterRace.Tiefling)
-                {
-                    if (bodyRenderer != null) bodyRenderer.color = tieflingSkinTint;
-                    if (raceFeaturesRenderer != null)
-                    {
-                        raceFeaturesRenderer.sprite = build.currentRace.mannequinSprite;
-                        raceFeaturesRenderer.color = build.currentRace.primaryColor;
-                        raceFeaturesRenderer.enabled = raceFeaturesRenderer.sprite != null;
-                    }
-                }
-            }
-            else
-            {
-                if (bodyRenderer != null) bodyRenderer.color = neutralSkinTint;
-                if (raceFeaturesRenderer != null) raceFeaturesRenderer.enabled = false;
-            }
 
-            // 2. Class Aura & Pedestal
-            if (build.currentClass != null)
-            {
-                if (pedestalAuraRenderer != null)
+                if (build.currentWeapon != lastWeapon && build.currentWeapon != null)
                 {
-                    pedestalAuraRenderer.enabled = true;
-                    Color c = build.currentClass.primaryColor;
-                    pedestalAuraRenderer.color = new Color(c.r, c.g, c.b, 0.65f);
-                    if (build.currentClass.mannequinSprite != null)
-                        pedestalAuraRenderer.sprite = build.currentClass.mannequinSprite;
-                }
-            }
-            else
-            {
-                if (pedestalAuraRenderer != null)
-                {
-                    pedestalAuraRenderer.enabled = false;
+                    PlaySound(weaponEquipSound);
                 }
             }
 
-            // 3. Armor Layer
-            if (build.currentArmor != null && build.currentArmor.mannequinSprite != null)
+            isInitialUpdate = false;
+            lastArmor = build.currentArmor;
+            lastWeapon = build.currentWeapon;
+
+            // 10. Body Layer (Order 10: Elf / Tiefling)
+            if (bodyRenderer != null)
             {
-                if (armorRenderer != null)
+                if (build.currentRace != null && build.currentRace.mannequinSprite != null)
+                {
+                    bodyRenderer.enabled = true;
+                    bodyRenderer.sprite = build.currentRace.mannequinSprite;
+                    bodyRenderer.color = Color.white;
+                }
+                else
+                {
+                    bodyRenderer.enabled = false;
+                }
+            }
+
+            // 20. Armor Layer (Order 20: No Armor / Light / Medium / Heavy)
+            if (armorRenderer != null)
+            {
+                if (build.currentArmor != null && build.currentArmor.mannequinSprite != null)
                 {
                     armorRenderer.enabled = true;
                     armorRenderer.sprite = build.currentArmor.mannequinSprite;
-                    armorRenderer.color = build.currentArmor.primaryColor;
+                    armorRenderer.color = Color.white;
                 }
-            }
-            else
-            {
-                if (armorRenderer != null)
+                else
                 {
                     armorRenderer.enabled = false;
                 }
             }
 
-            // 4. Weapon Layer
-            if (build.currentWeapon != null && build.currentWeapon.mannequinSprite != null)
+            // 30. Hair Layer (Order 30: Hair 1 / Hair 2)
+            if (hairRenderer != null)
             {
-                if (weaponRenderer != null)
+                if (build.currentHair != null && build.currentHair.mannequinSprite != null)
+                {
+                    hairRenderer.enabled = true;
+                    hairRenderer.sprite = build.currentHair.mannequinSprite;
+                    hairRenderer.color = Color.white;
+                }
+                else
+                {
+                    hairRenderer.enabled = false;
+                }
+            }
+
+            // 40. Horns Layer (Order 40: Horn 1 - Renders ON TOP of hair!)
+            if (hornsRenderer != null)
+            {
+                if (build.currentHorns != null && build.currentHorns.mannequinSprite != null)
+                {
+                    hornsRenderer.enabled = true;
+                    hornsRenderer.sprite = build.currentHorns.mannequinSprite;
+                    hornsRenderer.color = Color.white;
+                }
+                else
+                {
+                    hornsRenderer.enabled = false;
+                }
+            }
+
+            // 50. Weapon Layer (Order 50: Daggers / Great Sword / Long Bow / Staff)
+            if (weaponRenderer != null)
+            {
+                if (build.currentWeapon != null && build.currentWeapon.mannequinSprite != null)
                 {
                     weaponRenderer.enabled = true;
                     weaponRenderer.sprite = build.currentWeapon.mannequinSprite;
-                    weaponRenderer.color = build.currentWeapon.primaryColor;
+                    weaponRenderer.color = Color.white;
                 }
-            }
-            else
-            {
-                if (weaponRenderer != null)
+                else
                 {
                     weaponRenderer.enabled = false;
                 }
             }
 
-            // Snappy feedback
+            // Snappy equip punch animation
             TriggerEquipPunch();
+        }
+
+        private void PlaySound(AudioClip clip)
+        {
+            if (clip != null && audioSource != null)
+            {
+                audioSource.PlayOneShot(clip);
+            }
         }
 
         public void TriggerEquipPunch()
@@ -170,7 +194,7 @@ namespace DNDBeyond.Core
         private IEnumerator DoPunchScale()
         {
             Vector3 originalScale = baseScale;
-            Vector3 targetScale = baseScale * 1.05f;
+            Vector3 targetScale = baseScale * 1.04f;
 
             float elapsed = 0f;
             float duration = 0.08f;
@@ -194,23 +218,25 @@ namespace DNDBeyond.Core
         }
 
         public void AssignRenderers(
-            SpriteRenderer pedestal,
-            SpriteRenderer pedestalAura,
             SpriteRenderer body,
-            SpriteRenderer raceFeatures,
-            SpriteRenderer clothes,
             SpriteRenderer armor,
             SpriteRenderer hair,
+            SpriteRenderer horns,
             SpriteRenderer weapon)
         {
-            pedestalRenderer = pedestal;
-            pedestalAuraRenderer = pedestalAura;
             bodyRenderer = body;
-            raceFeaturesRenderer = raceFeatures;
-            clothesRenderer = clothes;
             armorRenderer = armor;
             hairRenderer = hair;
+            hornsRenderer = horns;
             weaponRenderer = weapon;
+        }
+
+        public void AssignAudio(AudioSource source, AudioClip clothesClip, AudioClip metalClip, AudioClip weaponClip)
+        {
+            audioSource = source;
+            clothesApplySound = clothesClip;
+            metalArmorSound = metalClip;
+            weaponEquipSound = weaponClip;
         }
     }
 }

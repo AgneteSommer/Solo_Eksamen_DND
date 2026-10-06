@@ -15,7 +15,7 @@ MonoBehaviour:
   ruleId: rule_wizard_medium_armor
   ruleTitle: 'Rule Quirk: Non-Proficient Armor'
   harmonyState: 1
-  priority: 90
+  priority: 95
   checkClass: 1
   requiredClass: 12
   checkArmor: 1
@@ -24,6 +24,8 @@ MonoBehaviour:
   requiredWeapon: 0
   checkRace: 0
   requiredRace: 0
-  shortStatus: Spellcasting Completely Blocked
-  insightNoteText: Wizards lack proficiency with medium armor. Wearing armor without
-    proficiency completely blocks all spellcasting gestures!
+  ignoreIfRace: 0
+  ignoredRace: 0
+  shortStatus: Spellcasting Blocked
+  insightNoteText: Wizards lack Medium Armor proficiency. In D&D 5e, wearing armor
+    without proficiency completely blocks all spellcasting!

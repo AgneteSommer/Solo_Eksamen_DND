@@ -13,13 +13,14 @@ MonoBehaviour:
   m_Name: armor_medium
   m_EditorClassIdentifier: Assembly-CSharp::DNDBeyond.Data.EquipmentSO
   id: armor_medium
-  displayName: Scale Mail
+  displayName: Medium Armor
   category: 2
   raceType: 0
   classType: 0
-  icon: {fileID: 21300000, guid: c8439bb43a0e63e498399a79763d4303, type: 3}
-  mannequinSprite: {fileID: 21300000, guid: c8439bb43a0e63e498399a79763d4303, type: 3}
-  primaryColor: {r: 0.7, g: 0.52, b: 0.28, a: 1}
+  appearanceSlot: 0
+  icon: {fileID: 21300000, guid: 44c8b3c824dae6947abc44f5354dec25, type: 3}
+  mannequinSprite: {fileID: 21300000, guid: 44c8b3c824dae6947abc44f5354dec25, type: 3}
+  primaryColor: {r: 1, g: 1, b: 1, a: 1}
   secondaryColor: {r: 1, g: 1, b: 1, a: 1}
   flavorTagline: Medium Armor (AC 14 + DEX max 2)
   description: Overlapping bronze and iron scales. Sturdy protection, but causes

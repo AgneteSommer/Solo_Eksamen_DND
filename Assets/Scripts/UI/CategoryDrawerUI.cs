@@ -16,12 +16,14 @@ namespace DNDBeyond.UI
         [SerializeField] private Button classCategoryButton;
         [SerializeField] private Button armorCategoryButton;
         [SerializeField] private Button weaponCategoryButton;
+        [SerializeField] private Button appearanceCategoryButton;
 
         [Header("Main Category Equipped Labels")]
         [SerializeField] private TextMeshProUGUI raceEquippedText;
         [SerializeField] private TextMeshProUGUI classEquippedText;
         [SerializeField] private TextMeshProUGUI armorEquippedText;
         [SerializeField] private TextMeshProUGUI weaponEquippedText;
+        [SerializeField] private TextMeshProUGUI appearanceEquippedText;
 
         [Header("Level 2: Subcategory View")]
         [SerializeField] private GameObject subcategoryPanel;
@@ -39,6 +41,7 @@ namespace DNDBeyond.UI
             if (classCategoryButton != null) classCategoryButton.onClick.AddListener(() => OpenSubcategory(OptionCategory.Class));
             if (armorCategoryButton != null) armorCategoryButton.onClick.AddListener(() => OpenSubcategory(OptionCategory.Armor));
             if (weaponCategoryButton != null) weaponCategoryButton.onClick.AddListener(() => OpenSubcategory(OptionCategory.Weapon));
+            if (appearanceCategoryButton != null) appearanceCategoryButton.onClick.AddListener(() => OpenSubcategory(OptionCategory.Appearance));
 
             if (backButton != null) backButton.onClick.AddListener(ShowMainMenu);
 
@@ -93,6 +96,9 @@ namespace DNDBeyond.UI
                         break;
                     case OptionCategory.Weapon:
                         subcategoryTitleText.text = "SELECT WEAPON";
+                        break;
+                    case OptionCategory.Appearance:
+                        subcategoryTitleText.text = "CUSTOMIZE APPEARANCE";
                         break;
                 }
             }
@@ -166,6 +172,13 @@ namespace DNDBeyond.UI
 
             if (weaponEquippedText != null)
                 weaponEquippedText.text = build.currentWeapon != null ? $"Current: {build.currentWeapon.displayName}" : "Current: (None chosen)";
+
+            if (appearanceEquippedText != null)
+            {
+                string h = build.currentHair != null ? build.currentHair.displayName : "Default";
+                string hn = build.currentHorns != null ? build.currentHorns.displayName : "None";
+                appearanceEquippedText.text = $"Current: {h}, {hn}";
+            }
         }
 
         private bool IsOptionSelected(CharacterOptionSO opt, CharacterBuild build)
@@ -182,6 +195,12 @@ namespace DNDBeyond.UI
                     return build.currentArmor == opt;
                 case OptionCategory.Weapon:
                     return build.currentWeapon == opt;
+                case OptionCategory.Appearance:
+                    if (opt.appearanceSlot == AppearanceSlot.Hair)
+                        return build.currentHair == opt;
+                    if (opt.appearanceSlot == AppearanceSlot.Horns)
+                        return build.currentHorns == opt;
+                    return false;
                 default:
                     return false;
             }
@@ -193,6 +212,7 @@ namespace DNDBeyond.UI
             Button classBtn, TextMeshProUGUI classLabel,
             Button armorBtn, TextMeshProUGUI armorLabel,
             Button weaponBtn, TextMeshProUGUI weaponLabel,
+            Button appearanceBtn, TextMeshProUGUI appearanceLabel,
             GameObject subPanel,
             Button backBtn,
             TextMeshProUGUI subTitle,
@@ -208,6 +228,8 @@ namespace DNDBeyond.UI
             armorEquippedText = armorLabel;
             weaponCategoryButton = weaponBtn;
             weaponEquippedText = weaponLabel;
+            appearanceCategoryButton = appearanceBtn;
+            appearanceEquippedText = appearanceLabel;
 
             subcategoryPanel = subPanel;
             backButton = backBtn;

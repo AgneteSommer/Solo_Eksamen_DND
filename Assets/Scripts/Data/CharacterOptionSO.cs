@@ -7,7 +7,15 @@ namespace DNDBeyond.Data
         Race,
         Class,
         Armor,
-        Weapon
+        Weapon,
+        Appearance
+    }
+
+    public enum AppearanceSlot
+    {
+        None,
+        Hair,
+        Horns
     }
 
     public enum CharacterRace
@@ -45,6 +53,7 @@ namespace DNDBeyond.Data
         [Header("Specific Type")]
         public CharacterRace raceType;
         public CharacterClass classType;
+        public AppearanceSlot appearanceSlot;
 
         [Header("Visuals (Greybox)")]
         public Sprite icon;

@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e27bc7df9817b064e8bab494fcccb07a, type: 3}
+  m_Name: rule_fighter_greatsword
+  m_EditorClassIdentifier: Assembly-CSharp::DNDBeyond.Data.HarmonyRuleSO
+  ruleId: rule_fighter_greatsword
+  ruleTitle: 'Harmonious Synergy: Peak Martial Mastery'
+  harmonyState: 0
+  priority: 65
+  checkClass: 1
+  requiredClass: 5
+  checkArmor: 0
+  requiredArmor: 0
+  checkWeapon: 1
+  requiredWeapon: 4
+  checkRace: 0
+  requiredRace: 0
+  ignoreIfRace: 0
+  ignoredRace: 0
+  shortStatus: Peak Martial Mastery
+  insightNoteText: Two-handed heavy weapon mastery synergizes with Great Weapon Fighting
+    style and Action Surge for overwhelming melee offense!
